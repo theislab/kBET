@@ -185,7 +185,8 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       if(plot==TRUE & !exists(x='exact.observed')){
         plot.data <- data.frame(class=rep(c('knnB', 'knnB (random)', 'lrt', 'lrt (random)'), each=stats), 
                                 data =  c(knnB.observed, knnB.expected, lrt.observed, lrt.expected))
-        ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate')
+        g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate') + scale_y_continuous(limits=c(0,1))
+        print(g)
       }
     }
     }
@@ -194,21 +195,22 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   
   if (stats>1){
     #summarize chi2-results
-    rejection$summary$knnB.expected <-  c(mean(knnB.expected) ,quantile(knnB.expected, c(0.025,0.5,0.975)))
+    CI95 <- c(0.025,0.5,0.975)
+    rejection$summary$knnB.expected <-  c(mean(knnB.expected) ,quantile(knnB.expected, CI95))
     rownames(rejection$summary) <- c('mean', '2.5%', '50%', '97.5%')
-    rejection$summary$knnB.observed <-  c(mean(knnB.observed) ,quantile(knnB.observed, c(0.025,0.5,0.975)))
-    rejection$summary$knnB.signif <- c(mean(knnB.signif) ,quantile(knnB.signif, c(0.025,0.5,0.975)))
+    rejection$summary$knnB.observed <-  c(mean(knnB.observed) ,quantile(knnB.observed, CI95))
+    rejection$summary$knnB.signif <- c(mean(knnB.signif) ,quantile(knnB.signif, CI95))
     #summarize lrt-results
-    rejection$summary$lrt.expected <-  c(mean(lrt.expected) ,quantile(lrt.expected, c(0.025,0.5,0.975)))
+    rejection$summary$lrt.expected <-  c(mean(lrt.expected) ,quantile(lrt.expected, CI95))
     
-    rejection$summary$lrt.observed <-  c(mean(lrt.observed) ,quantile(lrt.observed, c(0.025,0.5,0.975)))
-    rejection$summary$lrt.signif <- c(mean(lrt.signif) ,quantile(lrt.signif, c(0.025,0.5,0.975)))
+    rejection$summary$lrt.observed <-  c(mean(lrt.observed) ,quantile(lrt.observed, CI95))
+    rejection$summary$lrt.signif <- c(mean(lrt.signif) ,quantile(lrt.signif, CI95))
     #names(rejection$lrt.observed)[1] <-'mean'
     #summarize exact test results   
     if (exists(x='exact.observed')){
-      rejection$summary$exact.expected <-  c(mean(exact.expected) ,quantile(exact.expected, c(0.05,0.5,0.95)))
-      rejection$summary$exact.observed <-  c(mean(exact.observed) ,quantile(exact.observed, c(0.05,0.5,0.95)))
-      rejection$summary$exact.signif <- c(mean(exact.signif) ,quantile(exact.signif, c(0.05,0.5,0.95)))
+      rejection$summary$exact.expected <-  c(mean(exact.expected) ,quantile(exact.expected, CI95))
+      rejection$summary$exact.observed <-  c(mean(exact.observed) ,quantile(exact.observed, CI95))
+      rejection$summary$exact.signif <- c(mean(exact.signif) ,quantile(exact.signif, CI95))
     }
     
     if (stats<10){
@@ -263,10 +265,11 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
  
     if (stats>1){
       #summarize chi2-results
-      rejection$summary$knnB.expected <-  c(mean(knnB.expected) ,quantile(knnB.expected, c(0.025,0.5,0.975)))
+      CI95 <- c(0.025,0.5,0.975)
+      rejection$summary$knnB.expected <-  c(mean(knnB.expected) ,quantile(knnB.expected, CI95))
       rownames(rejection$summary) <- c('mean', '2.5%', '50%', '97.5%')
-      rejection$summary$knnB.observed <-  c(mean(knnB.observed) ,quantile(knnB.observed, c(0.025,0.5,0.975)))
-      rejection$summary$knnB.signif <- c(mean(knnB.signif) ,quantile(knnB.signif, c(0.025,0.5,0.975)))
+      rejection$summary$knnB.observed <-  c(mean(knnB.observed) ,quantile(knnB.observed, CI95))
+      rejection$summary$knnB.signif <- c(mean(knnB.signif) ,quantile(knnB.signif, CI95))
       
       if (stats<10){
         cat('Warning: The quantile computation for ')
@@ -331,7 +334,7 @@ lrt_approximation <- function(knn.set, class.freq, batch, df)
   result<- 1- pchisq(lrt.value, df) #p-value for the result
   return(result)
 }
-
+#truncated normal distribution distribution function
 ptnorm <- function(x,mu,sd, a=0, b=1, alpha=0.05){
   #this is the cumulative density of the truncated normal distribution
   #x ~ N(mu, sd^2), but we condition on a <= x <= b
@@ -361,7 +364,7 @@ ptnorm <- function(x,mu,sd, a=0, b=1, alpha=0.05){
   }
   return(cdf)
 }
-
+#wrapper for the multinomial exact test function
 multiNom <- function(x, y, z) {
   z.f <- factor(z)
   tmp <- multinomial.test(as.numeric(table(z.f[x])),y)

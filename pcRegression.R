@@ -6,35 +6,43 @@
 # tol: truncation threshold for significance level, default: 1e-16
 
 pcRegression <- function(pca.data, batch, tol=1e-16){
-  batch.levels <- unique(batch) 
+  batch.levels <- unique(batch)
+  
+  
   if(length(batch.levels)==2){
-    r2.batch <- matrix(NA,nrow=dim(pca.data$x)[2], ncol=3)
-    colnames(r2.batch) <- c('R.squared', 'p.value.lm', 'p.value.t.test')
     #r2.batch.raw <- r2.batch
-    for (k in 1:dim(r2.batch)[1]){
-      a <- lm(pca.data$x[,k] ~ batch)
-      r2.batch[k,1] <- summary(a)$r.squared
-      r2.batch[k,2] <- summary(a)$coefficients['batch',4]
-      t.test.result <- t.test(pca.data$x[batch==batch.levels[1],k], 
-                              pca.data$x[batch==batch.levels[2],k], paired = FALSE)
-      r2.batch[k,3] <- t.test.result$p.value
-      
-      #a <- lm(testset[,i] ~ batch)
-      # r2.batch.raw[i] <- summary(a)$r.squared
+    correlate.fun <- function(rot.data, batch){
+        a <- lm(rot.data ~ batch)
+        result <- numeric(2)
+        result[1] <- summary(a)$r.squared #coefficient of determination
+        result[2] <- summary(a)$coefficients['batch',4] #p-value (significance level)
+        t.test.result <- t.test(rot.data[batch==batch.levels[1]],
+                                rot.data[batch==batch.levels[2]], paired = FALSE)
+        result[3] <- t.test.result$p.value
+        return(result)
     }
+    # for-loop replaced by correlate.fun and apply
+    r2.batch <- apply(pca.data$x, 2, correlate.fun, batch)
+    r2.batch <- t(r2.batch)
+    colnames(r2.batch) <- c('R.squared', 'p.value.lm', 'p.value.t.test')
+    
     r2.batch[r2.batch[,2]<tol,2] <- tol
     r2.batch[r2.batch[,3]<tol,3] <- tol
   }else{
-  r2.batch <- matrix(NA,nrow=dim(pca.data$x)[2], ncol=2)
-  colnames(r2.batch) <- c('R.squared', 'p.value.lm')
+
+ 
   #r2.batch.raw <- r2.batch
   correlate.fun <- function(rot.data, batch){
-      a <- lm(rot.data[,k] ~ batch)
+      a <- lm(rot.data ~ batch)
       result <- numeric(2)
       result[1] <- summary(a)$r.squared #coefficient of determination
       result[2] <- summary(a)$coefficients['batch',4] #p-value (significance level)
+      return(result)
   }
   r2.batch <- apply(pca.data$x, 2, correlate.fun, batch)
+  
+  r2.batch <- t(r2.batch)
+  colnames(r2.batch) <- c('R.squared', 'p.value.lm')
   # for-loop replaced by correlate.fun and apply
   #for (k in 1:dim(r2.batch)[1]){
   #    a <- lm(pca.data$x[,k] ~ batch)

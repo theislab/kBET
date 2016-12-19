@@ -14,6 +14,12 @@
 knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, stats=100, alpha=0.05, addTest = FALSE, verbose=TRUE, plot = TRUE){
  require('ggplot2')
   
+  if (plot==TRUE & heuristic==TRUE){
+    source('addalpha.R')
+    colorset <- addalpha(brewer.pal(8, 'Set2'), 0.5)
+    colorset.nt <- brewer.pal(8, 'Set2')
+  }
+  
   if(addTest==TRUE){
     #load adapted EMT package
     path.name <- "EMT_adapted/" #how to adjust this? EMT_adapted was added to the repository
@@ -70,8 +76,8 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
     data.heu <- matrix(unlist(heuristics['knnB.observed',]), ncol=test.k)
     #analysis of heuristics - take the average max of some moving average
     window.size  <- 5
-    mean.reject <- apply(X=data.heu, MARGIN=2, FUN = SMA, window.size)
-    pre.opt.k <- window.size-1 + apply(mean.reject[window.size: (length(k)),], 2, function(x) {max(which(x>0| x==max(x)))})
+    mean.reject <- apply(X=data.heu, MARGIN=1, FUN = SMA, window.size)
+    pre.opt.k <- window.size-1 + apply(mean.reject[window.size: (length(k)),], 2, function(x) {max(which(x==max(x)))})
     opt.k <- floor(mean(pre.opt.k))
     #result
     k0 <- k[opt.k]
@@ -80,7 +86,31 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       cat('Size of neighbourhood is set to ')
       cat(paste0(k0, '\n'))
     }
-    
+    if (plot==TRUE){
+      k.frac <- 100*k/dim(df)[1]
+      data.null <- matrix(unlist(heuristics['knnB.expected',]), ncol=test.k)
+      data.kdep <- data.frame(neighbourhood=rep(c(k.frac, rev(k.frac)), 2), 
+                              result=c(data.heu[2,], rev(data.heu[4,]), #chi2 observed
+                                       data.null[2,], rev(data.null[4,])), #chi2 expected
+                              test= as.factor(rep(c('knnB','chi2 expected'), each=2*length(k)))) 
+      data.kdep.points <- data.frame(neighbourhood=rep(k.frac,2), result= c(data.heu[1,], data.null[1,]),
+                                     test= as.factor(rep(c('knnB','chi2 expected'), each=length(k))))
+      
+      p.heu <- ggplot(data.kdep, aes(x=neighbourhood, y=result)) +
+        geom_polygon(data=data.kdep, mapping=aes(x=neighbourhood, y=result, group=test, fill=test)) +
+        geom_line(data=data.kdep.points, mapping=aes(x=neighbourhood, y=result, color=test)) +
+        scale_color_manual(values = c('knnB' = colorset[1], 'chi2 expected'= colorset[2]),
+                           name = 'Test', breaks=c('knnB','chi2 expected'),
+                           labels = c('knnB', 'random\nassignment')) +
+        scale_fill_manual(values = c('knnB' = colorset[1], 'chi2 expected'= colorset[2]),
+                          name = 'Test', breaks=c('knnB','chi2 expected'),
+                          labels = c('knnB', 'random\nassignment')) +
+        labs(x= 'Neighbourhood size (in % sample size)', y = 'Rejection rate')+ 
+        geom_vline(aes(xintercept = k.frac[opt.k]),
+                   linetype="dotted" , size=0.5)+
+        theme_bw()
+    }
+    print(p.heu)
   }
   
   if(addTest==TRUE){

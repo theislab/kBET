@@ -9,7 +9,7 @@ An R package to provide a test for batch effects in high-dimensional single-cell
 #batch: vector or factor with batch label of each cell 
 batch.estimate <- knnB(data, batch)
 ```
-*knnB* plots (if `addplot =TRUE`) the heuristic that determines the optimal neighbourhood size *k* and creates a boxplot of the *knnB* rejection rates (for neighbourhoods and randomly chosen subsets of size *k*) and *knnB* retunrs a list with two parts:
+*knnB* plots (if `plot =TRUE` and `heuristic = TRUE`) the heuristic that determines the optimal neighbourhood size *k* and creates a boxplot of the *knnB* rejection rates (for neighbourhoods and randomly chosen subsets of size *k*) and *knnB* returns a list with two parts:
 
 * *summary*: summarizes the test results (with 95% confidence interval)
 * *results*: the p-values of all tested samples 

@@ -72,6 +72,7 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       res <- knnB(df=df, batch=batch, k0=x, knn=knn, testSize=NULL, heuristic=FALSE, stats=10, alpha=0.05, addTest = FALSE, plot=FALSE)
       result <- res$summary
     }
+    #btw, when we use sapply here in this context, it creates a list.
     heuristics <- sapply(k, myfun, df, batch, knn)
     data.heu <- matrix(unlist(heuristics['knnB.observed',]), ncol=test.k)
     #analysis of heuristics - take the average max of some moving average
@@ -248,11 +249,22 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       cat(paste0(stats))
       cat(' subset results is not meaningful.')
     }
-  }else{
+  }else{ #i.e. no stats
     rejection$summary$knnB.expected <- knnB.expected
     rejection$summary$knnB.observed <- knnB.observed
     rejection$summary$knnB.signif <- knnB.signif
-    #TO DO: if addTest == TRUE -> add results!!!
+
+    if (addTest==TRUE){
+      rejection$summary$lrt.expected <- lrt.expected
+      rejection$summary$lrt.observed <- lrt.observed
+      rejection$summary$lrt.signif <- lrt.signif
+      if (exists(x='exact.observed')){
+        rejection$summary$exact.expected <-  exact.expected
+        rejection$summary$exact.observed <-  exact.observed
+        rejection$summary$exact.signif <- exact.signif
+      }
+    }
+    
   }
   }else{ #knnB only
     #initialize result list

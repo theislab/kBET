@@ -65,53 +65,50 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   }
   
   if(heuristic==TRUE){
-    require(TTR)
-    test.k <- 30
-    k <- round(seq(10, k0, length.out = test.k),0)
+    source('bisect.R')
     myfun <- function(x,df,batch, knn){
       res <- knnB(df=df, batch=batch, k0=x, knn=knn, testSize=NULL, heuristic=FALSE, stats=10, alpha=0.05, addTest = FALSE, plot=FALSE)
       result <- res$summary
+      result <- result$knnB.observed[1]
     }
-    #btw, when we use sapply here in this context, it creates a list.
-    heuristics <- sapply(k, myfun, df, batch, knn)
-    data.heu <- matrix(unlist(heuristics['knnB.observed',]), ncol=test.k)
-    #analysis of heuristics - take the average max of some moving average
-    window.size  <- 5
-    mean.reject <- apply(X=data.heu, MARGIN=1, FUN = SMA, window.size)
-    pre.opt.k <- window.size-1 + apply(mean.reject[window.size: (length(k)),], 2, function(x) {max(which(x==max(x)))})
-    opt.k <- floor(mean(pre.opt.k))
+    #btw, when we bisect here that returns some interval with the optimal neihbourhood size
+    opt.k <- bisect(myfun, c(10,k0), df, batch, knn) 
     #result
-    k0 <- k[opt.k]
+    k0 <- opt.k[1]
     if(verbose==TRUE){
       cat('The optimal neighbourhood size is determined.\n')
       cat('Size of neighbourhood is set to ')
       cat(paste0(k0, '\n'))
     }
-    if (plot==TRUE){
-      k.frac <- 100*k/dim(df)[1]
-      data.null <- matrix(unlist(heuristics['knnB.expected',]), ncol=test.k)
-      data.kdep <- data.frame(neighbourhood=rep(c(k.frac, rev(k.frac)), 2), 
-                              result=c(data.heu[2,], rev(data.heu[4,]), #chi2 observed
-                                       data.null[2,], rev(data.null[4,])), #chi2 expected
-                              test= as.factor(rep(c('knnB','chi2 expected'), each=2*length(k)))) 
-      data.kdep.points <- data.frame(neighbourhood=rep(k.frac,2), result= c(data.heu[1,], data.null[1,]),
-                                     test= as.factor(rep(c('knnB','chi2 expected'), each=length(k))))
-      
-      p.heu <- ggplot(data.kdep, aes(x=neighbourhood, y=result)) +
-        geom_polygon(data=data.kdep, mapping=aes(x=neighbourhood, y=result, group=test, fill=test)) +
-        geom_line(data=data.kdep.points, mapping=aes(x=neighbourhood, y=result, color=test)) +
-        scale_color_manual(values = c('knnB' = colorset[1], 'chi2 expected'= colorset[2]),
-                           name = 'Test', breaks=c('knnB','chi2 expected'),
-                           labels = c('knnB', 'random\nassignment')) +
-        scale_fill_manual(values = c('knnB' = colorset[1], 'chi2 expected'= colorset[2]),
-                          name = 'Test', breaks=c('knnB','chi2 expected'),
-                          labels = c('knnB', 'random\nassignment')) +
-        labs(x= 'Neighbourhood size (in % sample size)', y = 'Rejection rate')+ 
-        geom_vline(aes(xintercept = k.frac[opt.k]),
-                   linetype="dotted" , size=0.5)+
-        theme_bw()
-    }
-    print(p.heu)
+    #heuristic was updated to an optimization based method instead of scanning method
+    #plot of different test values now obsolete
+    
+    # if (plot==TRUE){
+    #   k.frac <- 100*k/dim(df)[1]
+    #   data.null <- matrix(unlist(heuristics['knnB.expected',]), ncol=test.k)
+    #   data.kdep <- data.frame(neighbourhood=rep(c(k.frac, rev(k.frac)), 2), 
+    #                           result=c(data.heu[2,], rev(data.heu[4,]), #chi2 observed
+    #                                    data.null[2,], rev(data.null[4,])), #chi2 expected
+    #                           test= as.factor(rep(c('knnB','chi2 expected'), each=2*length(k)))) 
+    #   data.kdep.points <- data.frame(neighbourhood=rep(k.frac,2), result= c(data.heu[1,], data.null[1,]),
+    #                                  test= as.factor(rep(c('knnB','chi2 expected'), each=length(k))))
+    #   
+    #   p.heu <- ggplot(data.kdep, aes(x=neighbourhood, y=result)) +
+    #     geom_polygon(data=data.kdep, mapping=aes(x=neighbourhood, y=result, group=test, fill=test)) +
+    #     geom_line(data=data.kdep.points, mapping=aes(x=neighbourhood, y=result, color=test)) +
+    #     scale_color_manual(values = c('knnB' = colorset[1], 'chi2 expected'= colorset[2]),
+    #                        name = 'Test', breaks=c('knnB','chi2 expected'),
+    #                        labels = c('knnB', 'random\nassignment')) +
+    #     scale_fill_manual(values = c('knnB' = colorset[1], 'chi2 expected'= colorset[2]),
+    #                       name = 'Test', breaks=c('knnB','chi2 expected'),
+    #                       labels = c('knnB', 'random\nassignment')) +
+    #     labs(x= 'Neighbourhood size (in % sample size)', y = 'Rejection rate')+ 
+    #     geom_vline(aes(xintercept = k.frac[opt.k]),
+    #                linetype="dotted" , size=0.5)+
+    #     theme_bw()
+    #   print(p.heu)
+    # }
+   
   }
   
   if(addTest==TRUE){

@@ -11,7 +11,7 @@
 # alpha: significance level
 # addTest: perform an LRT-approximation to the multinomial test AND a multinomial exact test (if appropriate)
 # plot: if stats > 10, then a boxplot of the resulting rejection rates is created
-knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, stats=100, alpha=0.05, addTest = FALSE, verbose=TRUE, plot = TRUE){
+kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, stats=100, alpha=0.05, addTest = FALSE, verbose=TRUE, plot = TRUE){
  require('ggplot2')
   
   if (plot==TRUE & heuristic==TRUE){
@@ -67,14 +67,14 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   if(heuristic==TRUE){
     source('bisect.R')
     myfun <- function(x,df,batch, knn){
-      res <- knnB(df=df, batch=batch, k0=x, knn=knn, testSize=NULL, heuristic=FALSE, stats=10, alpha=0.05, addTest = FALSE, plot=FALSE)
+      res <- kBET(df=df, batch=batch, k0=x, knn=knn, testSize=NULL, heuristic=FALSE, stats=10, alpha=0.05, addTest = FALSE, plot=FALSE)
       result <- res$summary
-      result <- result$knnB.observed[1]
+      result <- result$kBET.observed[1]
     }
     #btw, when we bisect here that returns some interval with the optimal neihbourhood size
     opt.k <- bisect(myfun, c(10,k0), df, batch, knn) 
     #result
-    k0 <- opt.k[1]
+    k0 <- opt.k[2]
     if(verbose==TRUE){
       cat('The optimal neighbourhood size is determined.\n')
       cat('Size of neighbourhood is set to ')
@@ -85,23 +85,23 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
     
     # if (plot==TRUE){
     #   k.frac <- 100*k/dim(df)[1]
-    #   data.null <- matrix(unlist(heuristics['knnB.expected',]), ncol=test.k)
+    #   data.null <- matrix(unlist(heuristics['kBET.expected',]), ncol=test.k)
     #   data.kdep <- data.frame(neighbourhood=rep(c(k.frac, rev(k.frac)), 2), 
     #                           result=c(data.heu[2,], rev(data.heu[4,]), #chi2 observed
     #                                    data.null[2,], rev(data.null[4,])), #chi2 expected
-    #                           test= as.factor(rep(c('knnB','chi2 expected'), each=2*length(k)))) 
+    #                           test= as.factor(rep(c('kBET','chi2 expected'), each=2*length(k)))) 
     #   data.kdep.points <- data.frame(neighbourhood=rep(k.frac,2), result= c(data.heu[1,], data.null[1,]),
-    #                                  test= as.factor(rep(c('knnB','chi2 expected'), each=length(k))))
+    #                                  test= as.factor(rep(c('kBET','chi2 expected'), each=length(k))))
     #   
     #   p.heu <- ggplot(data.kdep, aes(x=neighbourhood, y=result)) +
     #     geom_polygon(data=data.kdep, mapping=aes(x=neighbourhood, y=result, group=test, fill=test)) +
     #     geom_line(data=data.kdep.points, mapping=aes(x=neighbourhood, y=result, color=test)) +
-    #     scale_color_manual(values = c('knnB' = colorset[1], 'chi2 expected'= colorset[2]),
-    #                        name = 'Test', breaks=c('knnB','chi2 expected'),
-    #                        labels = c('knnB', 'random\nassignment')) +
-    #     scale_fill_manual(values = c('knnB' = colorset[1], 'chi2 expected'= colorset[2]),
-    #                       name = 'Test', breaks=c('knnB','chi2 expected'),
-    #                       labels = c('knnB', 'random\nassignment')) +
+    #     scale_color_manual(values = c('kBET' = colorset[1], 'chi2 expected'= colorset[2]),
+    #                        name = 'Test', breaks=c('kBET','chi2 expected'),
+    #                        labels = c('kBET', 'random\nassignment')) +
+    #     scale_fill_manual(values = c('kBET' = colorset[1], 'chi2 expected'= colorset[2]),
+    #                       name = 'Test', breaks=c('kBET','chi2 expected'),
+    #                       labels = c('kBET', 'random\nassignment')) +
     #     labs(x= 'Neighbourhood size (in % sample size)', y = 'Rejection rate')+ 
     #     geom_vline(aes(xintercept = k.frac[opt.k]),
     #                linetype="dotted" , size=0.5)+
@@ -114,17 +114,17 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   if(addTest==TRUE){
     #initialize result list  
   rejection <- list()
-  rejection$summary <- data.frame(knnB.expected = numeric(4),
-                                  knnB.observed = numeric(4),
+  rejection$summary <- data.frame(kBET.expected = numeric(4),
+                                  kBET.observed = numeric(4),
                                   lrt.expected = numeric(4),
                                   lrt.observed = numeric(4)
   ) 
-  knnB.expected <- numeric(stats)
-  knnB.observed <- numeric(stats)
-  knnB.signif <- numeric(stats)
+  kBET.expected <- numeric(stats)
+  kBET.observed <- numeric(stats)
+  kBET.signif <- numeric(stats)
   rejection$results   <- data.frame(tested = numeric(dim.dataset[1]),
-                                    knnB.pvalue.test = rep(0,dim.dataset[1]),
-                                    knnB.pvalue.null = rep(0, dim.dataset[1]),
+                                    kBET.pvalue.test = rep(0,dim.dataset[1]),
+                                    kBET.pvalue.null = rep(0, dim.dataset[1]),
                                     lrt.pvalue.test = rep(0,dim.dataset[1]),
                                     lrt.pvalue.null = rep(0, dim.dataset[1]))
   lrt.expected <- numeric(stats)
@@ -154,18 +154,18 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
     p.val.test.null <- apply(env.rand, 1, FUN = chi_batch_test, class.frequency, batch, dof) 
     
     #summarise test results
-    knnB.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
-    knnB.observed[i] <- sum(p.val.test < alpha) / length(p.val.test)
+    kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
+    kBET.observed[i] <- sum(p.val.test < alpha) / length(p.val.test)
     
     #compute significance
-    knnB.signif[i] <- 1 - ptnorm(knnB.observed[i], 
-                                 mu=knnB.expected[i], 
-                                 sd=sqrt(knnB.expected[i]*(1-knnB.expected[i])/testSize), 
+    kBET.signif[i] <- 1 - ptnorm(kBET.observed[i], 
+                                 mu=kBET.expected[i], 
+                                 sd=sqrt(kBET.expected[i]*(1-kBET.expected[i])/testSize), 
                                  alpha=alpha)
     #assign results to result table
     rejection$results$tested[idx.runs] <- 1
-    rejection$results$knnB.pvalue.test[idx.runs] <- p.val.test
-    rejection$results$knnB.pvalue.null[idx.runs] <- p.val.test.null
+    rejection$results$kBET.pvalue.test[idx.runs] <- p.val.test
+    rejection$results$kBET.pvalue.null[idx.runs] <- p.val.test.null
     
       
     #compute likelihood-ratio test (approximation for multinomial exact test)
@@ -206,13 +206,13 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       rejection$results$exact.pvalue.test[idx.runs] <- p.val.test.exact
       rejection$results$exact.pvalue.null[idx.runs] <- p.val.test.exact.null
       if(plot==TRUE){
-        plot.data <- data.frame(class=rep(c('knnB', 'knnB (random)', 'lrt', 'lrt (random)', 'exact', 'exact (random)'), each=stats), 
-                                data =  c(knnB.observed, knnB.expected, lrt.observed, lrt.expected, exact.observed, exact.expected))
+        plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)', 'exact', 'exact (random)'), each=stats), 
+                                data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected, exact.observed, exact.expected))
         ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate')
       }
       if(plot==TRUE & !exists(x='exact.observed')){
-        plot.data <- data.frame(class=rep(c('knnB', 'knnB (random)', 'lrt', 'lrt (random)'), each=stats), 
-                                data =  c(knnB.observed, knnB.expected, lrt.observed, lrt.expected))
+        plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)'), each=stats), 
+                                data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected))
         g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate') + scale_y_continuous(limits=c(0,1))
         print(g)
       }
@@ -224,10 +224,10 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   if (stats>1){
     #summarize chi2-results
     CI95 <- c(0.025,0.5,0.975)
-    rejection$summary$knnB.expected <-  c(mean(knnB.expected) ,quantile(knnB.expected, CI95))
+    rejection$summary$kBET.expected <-  c(mean(kBET.expected) ,quantile(kBET.expected, CI95))
     rownames(rejection$summary) <- c('mean', '2.5%', '50%', '97.5%')
-    rejection$summary$knnB.observed <-  c(mean(knnB.observed) ,quantile(knnB.observed, CI95))
-    rejection$summary$knnB.signif <- c(mean(knnB.signif) ,quantile(knnB.signif, CI95))
+    rejection$summary$kBET.observed <-  c(mean(kBET.observed) ,quantile(kBET.observed, CI95))
+    rejection$summary$kBET.signif <- c(mean(kBET.signif) ,quantile(kBET.signif, CI95))
     #summarize lrt-results
     rejection$summary$lrt.expected <-  c(mean(lrt.expected) ,quantile(lrt.expected, CI95))
     
@@ -247,9 +247,9 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       cat(' subset results is not meaningful.')
     }
   }else{ #i.e. no stats
-    rejection$summary$knnB.expected <- knnB.expected
-    rejection$summary$knnB.observed <- knnB.observed
-    rejection$summary$knnB.signif <- knnB.signif
+    rejection$summary$kBET.expected <- kBET.expected
+    rejection$summary$kBET.observed <- kBET.observed
+    rejection$summary$kBET.signif <- kBET.signif
 
     if (addTest==TRUE){
       rejection$summary$lrt.expected <- lrt.expected
@@ -263,18 +263,18 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
     }
     
   }
-  }else{ #knnB only
+  }else{ #kBET only
     #initialize result list
     rejection <- list()
-    rejection$summary <- data.frame(knnB.expected = numeric(4),
-                                    knnB.observed = numeric(4),
-                                    knnB.signif = numeric(4)) 
-    knnB.expected <- numeric(stats)
-    knnB.observed <- numeric(stats)
-    knnB.signif <- numeric(stats)
+    rejection$summary <- data.frame(kBET.expected = numeric(4),
+                                    kBET.observed = numeric(4),
+                                    kBET.signif = numeric(4)) 
+    kBET.expected <- numeric(stats)
+    kBET.observed <- numeric(stats)
+    kBET.signif <- numeric(stats)
     rejection$results   <- data.frame(tested = numeric(dim.dataset[1]),
-                                      knnB.pvalue.test = rep(0,dim.dataset[1]),
-                                      knnB.pvalue.null = rep(0, dim.dataset[1]))
+                                      kBET.pvalue.test = rep(0,dim.dataset[1]),
+                                      kBET.pvalue.null = rep(0, dim.dataset[1]))
   
       for (i in 1:stats){
       # choose a random sample from dataset (rows: samples, columns: parameters)
@@ -288,27 +288,27 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       p.val.test.null <- apply(env.rand, 1, FUN = chi_batch_test, class.frequency, batch, dof) 
       
       #summarise test results
-      knnB.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
-      knnB.observed[i] <- sum(p.val.test < alpha) / length(p.val.test)
+      kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
+      kBET.observed[i] <- sum(p.val.test < alpha) / length(p.val.test)
       
       #compute significance
-      knnB.signif[i] <- 1 - ptnorm(knnB.observed[i], 
-                                   mu=knnB.expected[i], 
-                                   sd=sqrt(knnB.expected[i]*(1-knnB.expected[i])/testSize), 
+      kBET.signif[i] <- 1 - ptnorm(kBET.observed[i], 
+                                   mu=kBET.expected[i], 
+                                   sd=sqrt(kBET.expected[i]*(1-kBET.expected[i])/testSize), 
                                    alpha=alpha)
       #assign results to result table
       rejection$results$tested[idx.runs] <- 1
-      rejection$results$knnB.pvalue.test[idx.runs] <- p.val.test
-      rejection$results$knnB.pvalue.null[idx.runs] <- p.val.test.null
+      rejection$results$kBET.pvalue.test[idx.runs] <- p.val.test
+      rejection$results$kBET.pvalue.null[idx.runs] <- p.val.test.null
     }
  
     if (stats>1){
       #summarize chi2-results
       CI95 <- c(0.025,0.5,0.975)
-      rejection$summary$knnB.expected <-  c(mean(knnB.expected) ,quantile(knnB.expected, CI95))
+      rejection$summary$kBET.expected <-  c(mean(kBET.expected) ,quantile(kBET.expected, CI95))
       rownames(rejection$summary) <- c('mean', '2.5%', '50%', '97.5%')
-      rejection$summary$knnB.observed <-  c(mean(knnB.observed) ,quantile(knnB.observed, CI95))
-      rejection$summary$knnB.signif <- c(mean(knnB.signif) ,quantile(knnB.signif, CI95))
+      rejection$summary$kBET.observed <-  c(mean(kBET.observed) ,quantile(kBET.observed, CI95))
+      rejection$summary$kBET.signif <- c(mean(kBET.signif) ,quantile(kBET.signif, CI95))
       
       if (stats<10){
         cat('Warning: The quantile computation for ')
@@ -316,15 +316,15 @@ knnB <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
         cat(' subset results is not meaningful.')
       }
       if(plot==TRUE){
-        plot.data <- data.frame(class=rep(c('knnB', 'random assigment'), each=stats), data =  c( knnB.observed,knnB.expected))
+        plot.data <- data.frame(class=rep(c('kBET', 'random assigment'), each=stats), data =  c( kBET.observed,kBET.expected))
         g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate') + 
               scale_y_continuous(limits=c(0,1))
         print(g)
       }
     }else{
-      rejection$summary$knnB.expected <- knnB.expected[1]
-      rejection$summary$knnB.observed <- knnB.observed[1]
-      rejection$summary$knnB.signif <- knnB.signif[1]
+      rejection$summary$kBET.expected <- kBET.expected[1]
+      rejection$summary$kBET.observed <- kBET.observed[1]
+      rejection$summary$kBET.signif <- kBET.signif[1]
     }
   }
 

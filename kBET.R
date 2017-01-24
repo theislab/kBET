@@ -310,6 +310,11 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       rejection$summary$kBET.observed <-  c(mean(kBET.observed) ,quantile(kBET.observed, CI95))
       rejection$summary$kBET.signif <- c(mean(kBET.signif) ,quantile(kBET.signif, CI95))
       
+      #return also stats
+      rejection$stats$kBET.expected <- kBET.expected
+      rejection$stats$kBET.observed <- kBET.observed
+      rejection$stats$kBET.signif <- kBET.signif
+      
       if (stats<10){
         cat('Warning: The quantile computation for ')
         cat(paste0(stats))

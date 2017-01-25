@@ -30,7 +30,12 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   
   #preliminaries:
   dof <- length(unique(batch))-1 #degrees of freedom
-  frequencies <- table(batch)/length(batch)
+  if(is.factor(batch)){
+    frequencies <- table(droplevels(batch))/length(batch)
+  }else{
+    frequencies <- table(batch)/length(batch)
+  }
+  
   class.frequency <- data.frame(class = names(frequencies), 
                                 freq = as.numeric(frequencies))
   dataset <- df
@@ -389,7 +394,7 @@ ptnorm <- function(x,mu,sd, a=0, b=1, alpha=0.05){
     b <- tmp 
   }
   
-  if(sd<=0) {
+  if(sd<=0 | is.na(sd)) {
     warning("Standard deviation must be positive.")
     if (alpha<=0)
     {

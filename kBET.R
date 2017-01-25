@@ -31,10 +31,10 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   #preliminaries:
   dof <- length(unique(batch))-1 #degrees of freedom
   if(is.factor(batch)){
-    frequencies <- table(droplevels(batch))/length(batch)
-  }else{
-    frequencies <- table(batch)/length(batch)
+    batch <- droplevels(batch)
   }
+  frequencies <- table(batch)/length(batch)
+
   
   class.frequency <- data.frame(class = names(frequencies), 
                                 freq = as.numeric(frequencies))
@@ -352,7 +352,11 @@ chi_batch_test <- function(knn.set, class.freq, batch, df)
   #compute chi-square test statistics
   chi.sq.value <- sum((full.classes - exp.freqs)^2/exp.freqs)
   result<- 1- pchisq(chi.sq.value, df) #p-value for the result
-  return(result)
+  if(is.na(result)){ #I actually would like to now when 'NA' arises. 
+    return(0)
+  }else{
+    return(result)
+  }
 }
 
 lrt_approximation <- function(knn.set, class.freq, batch, df)
@@ -381,7 +385,12 @@ lrt_approximation <- function(knn.set, class.freq, batch, df)
   lrt.value <- -2*sum(full.obs * log(exp.freqs/full.classes))
   
   result<- 1- pchisq(lrt.value, df) #p-value for the result
-  return(result)
+  if(is.na(result)){ #I actually would like to now when 'NA' arises. 
+    return(0)
+  }else{
+    return(result)
+  }
+  
 }
 #truncated normal distribution distribution function
 ptnorm <- function(x,mu,sd, a=0, b=1, alpha=0.05){

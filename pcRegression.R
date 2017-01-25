@@ -8,14 +8,13 @@
 pcRegression <- function(pca.data, batch, tol=1e-16){
   batch.levels <- unique(batch)
   
-  
   if(length(batch.levels)==2){
     #r2.batch.raw <- r2.batch
     correlate.fun <- function(rot.data, batch){
         a <- lm(rot.data ~ batch)
         result <- numeric(2)
         result[1] <- summary(a)$r.squared #coefficient of determination
-        result[2] <- summary(a)$coefficients['batch',4] #p-value (significance level)
+        result[2] <- summary(a)$coefficients[2,4] #p-value (significance level)
         t.test.result <- t.test(rot.data[batch==batch.levels[1]],
                                 rot.data[batch==batch.levels[2]], paired = FALSE)
         result[3] <- t.test.result$p.value

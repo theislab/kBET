@@ -1,4 +1,6 @@
-ExactMultinomialTestChisquare <- function (observed, prob, size, groups, numEvents, verbose) 
+#from EMT package (solemnly adapted to stay quiet)
+
+ExactMultinomialTestChisquare <- function (observed, prob, size, groups, numEvents, verbose)
 {
   expectedFreq = size * prob
   chi2Obs = chisqStat(observed, expectedFreq)

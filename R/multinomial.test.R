@@ -1,4 +1,6 @@
-multinomial.test <- function (observed, prob, useChisq = FALSE, MonteCarlo = FALSE, ntrial = 1e+05, atOnce = 1e+06, verbose=FALSE) 
+#from EMT package (function needed to run ExactMultinomialTest)
+
+multinomial.test <- function (observed, prob, useChisq = FALSE, MonteCarlo = FALSE, ntrial = 1e+05, atOnce = 1e+06, verbose=FALSE)
 {
   if (!is.vector(observed, mode = "numeric")) 
     stop(" Observations have to be stored in a vector, e.g.  'observed <- c(5,2,1)'")

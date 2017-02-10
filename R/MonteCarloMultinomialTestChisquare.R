@@ -1,4 +1,6 @@
-MonteCarloMultinomialTestChisquare <- function (observed, prob, size, groups, numEvents, ntrial, atOnce) 
+#from EMT package (function needed to run ExactMultinomialTest)
+
+MonteCarloMultinomialTestChisquare <- function (observed, prob, size, groups, numEvents, ntrial, atOnce)
 {
   expectedFreq = size * prob
   chi2Obs = chisqStat(observed, expectedFreq)

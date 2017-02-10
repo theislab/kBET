@@ -1,4 +1,6 @@
-MonteCarloMultinomialTest <-function (observed, prob, size, groups, numEvents, ntrial, atOnce, verbose) 
+#from EMT package (function is needed to run ExactMultinomial test)
+
+MonteCarloMultinomialTest <-function (observed, prob, size, groups, numEvents, ntrial, atOnce, verbose)
 {
   IDofObs <- paste(observed, sep = "", collapse = "")
   sumLowFreq = 0

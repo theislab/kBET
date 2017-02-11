@@ -10,3 +10,15 @@ License: GPL
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
+Collate: 
+    'ExactMultinomialTest.R'
+    'ExactMultinomialTestChisquare.R'
+    'MonteCarloMultinomialTest.R'
+    'MonteCarloMultinomialTestChisquare.R'
+    'addalpha.R'
+    'batch_sil.R'
+    'bisect.R'
+    'findVectors.R'
+    'kBET.R'
+    'multinomial.test.R'
+    'pcRegression.R'

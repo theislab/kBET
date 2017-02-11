@@ -2,4 +2,3 @@
 
 export(kBET)
 importFrom(FNN,get.knn)
-useDynLib(ggplot2)

@@ -17,7 +17,6 @@
 #' batch.estimate <- kBET(data,batch)
 
 #' @importFrom FNN get.knn
-#' @useDynLib ggplot2
 #' @include bisect.R
 #' @include kBET-utils.R
 #' @name kBET

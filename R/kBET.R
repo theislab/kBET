@@ -6,7 +6,7 @@
 #' @param batch batch id for each cell
 #' @param k0 number of nearest neighbours to test on (neighbourhood size)
 #' @param knn a set of nearest neighbours for each cell (optional)
-#' @param testSize number of data points to test, default: 10% sample size
+#' @param testSize number of data points to test, default: 10 percent sample size
 #' @param heuristic compute an optimal neighbourhood size k
 #' @param stats to create a statistics on batch estimates, evaluate 'stats' subsets
 #' @param alpha significance level

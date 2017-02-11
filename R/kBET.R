@@ -11,9 +11,10 @@
 #' alpha: significance level
 #' addTest: perform an LRT-approximation to the multinomial test AND a multinomial exact test (if appropriate)
 #' plot: if stats > 10, then a boxplot of the resulting rejection rates is created
-#' @useDynLib FNN
+#' @importFrom FNN get.knn
 #' @useDynLib ggplot2
 #' @include bisect.R
+#' @include kBET-utils.R
 #' @name kBET
 #' @export
 kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, stats=100, alpha=0.05, addTest = FALSE, verbose=TRUE, plot = TRUE){

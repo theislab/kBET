@@ -1,5 +1,4 @@
 
-
 chi_batch_test <- function(knn.set, class.freq, batch, df)
 {
   #knn.set: indices of nearest neighbours

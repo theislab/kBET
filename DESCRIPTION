@@ -19,6 +19,7 @@ Collate:
     'batch_sil.R'
     'bisect.R'
     'findVectors.R'
+    'kBET-utils.R'
     'kBET.R'
     'multinomial.test.R'
     'pcRegression.R'

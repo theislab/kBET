@@ -17,7 +17,7 @@ kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL,
 
 \item{knn}{a set of nearest neighbours for each cell (optional)}
 
-\item{testSize}{number of data points to test, default: 10% sample size}
+\item{testSize}{number of data points to test, (10 percent sample size default)}
 
 \item{heuristic}{compute an optimal neighbourhood size k}
 
@@ -34,4 +34,7 @@ List with test summary - a rejection rate for the data, an expected rejection ra
 }
 \description{
 kBET runs a chi square test to evaluate the probability of a batch effect.
+}
+\examples{
+batch.estimate <- kBET(data,batch)
 }

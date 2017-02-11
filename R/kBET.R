@@ -1,21 +1,22 @@
 #' kBET - k-nearest neighbour batch effect test
 #'
-#' kBET runs a chi square test to evaluate the probability of a batch effect.
-
+#' @description kBET runs a chi square test to evaluate the probability of a batch effect.
+#'
 #' @param df dataset (rows: samples, columns: parameters)
 #' @param batch batch id for each cell
 #' @param k0 number of nearest neighbours to test on (neighbourhood size)
 #' @param knn a set of nearest neighbours for each cell (optional)
-#' @param testSize number of data points to test, default: 10% sample size
+#' @param testSize number of data points to test, (10 percent sample size default)
 #' @param heuristic compute an optimal neighbourhood size k
 #' @param stats to create a statistics on batch estimates, evaluate 'stats' subsets
 #' @param alpha significance level
 #' @param addTest perform an LRT-approximation to the multinomial test AND a multinomial exact test (if appropriate)
 #' @param plot if stats > 10, then a boxplot of the resulting rejection rates is created
 #' @return List with test summary - a rejection rate for the data, an expected rejection rate for random labeling and the significance for the observed result
+#' @examples
+#' batch.estimate <- kBET(data,batch)
 
 #' @importFrom FNN get.knn
-#' @useDynLib ggplot2
 #' @include bisect.R
 #' @include kBET-utils.R
 #' @name kBET

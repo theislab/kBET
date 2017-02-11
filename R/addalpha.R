@@ -1,3 +1,4 @@
+#' @export
 addalpha <- function(colors, alpha=1.0) {
   r <- col2rgb(colors, alpha=T)
   # Apply alpha

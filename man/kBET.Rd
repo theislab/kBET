@@ -11,7 +11,7 @@ kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL,
 \arguments{
 \item{df}{dataset (rows: samples, columns: parameters)}
 
-\item{batch}{batch id for each cell}
+\item{batch}{batch id for each cell or a data frame with both condition and replicates}
 
 \item{k0}{number of nearest neighbours to test on (neighbourhood size)}
 

@@ -7,11 +7,21 @@
 pcRegression(pca.data, batch, tol = 1e-16)
 }
 \arguments{
-\item{pca.data}{a list as created by 'prcomp', pcRegression needs}
+\item{pca.data}{a list as created by 'prcomp', pcRegression needs $x: the principal components (PCs, correctly: the rotated data) and $sdev: the standard deviations of the PCs)}
 
 \item{batch}{vector with the batch covariate (for each cell)}
 
 \item{tol}{truncation threshold for significance level, default: 1e-16}
+}
+\value{
+List summarising principal component regression
+\itemize{
+ \item maxVar: the variance explained by principal component(s) that correlate(s) most with the batch effect
+ \item PmaxVar: p-value (returned by linear model) for the respective principal components (related to maxVar)
+\item R2Var: sum over Var(PC_i)*r2(PC_i and batch) for all i
+\item ExplainedVar: explained variance for each PC
+\item r2: detailed results of correlation (R-Square) analysis
+}
 }
 \description{
 pcRegression does a linear model fit of principal components and a batch (categorical) variable

@@ -3,7 +3,7 @@
 #' @description kBET runs a chi square test to evaluate the probability of a batch effect.
 #'
 #' @param df dataset (rows: samples, columns: parameters)
-#' @param batch batch id for each cell
+#' @param batch batch id for each cell or a data frame with both condition and replicates
 #' @param k0 number of nearest neighbours to test on (neighbourhood size)
 #' @param knn a set of nearest neighbours for each cell (optional)
 #' @param testSize number of data points to test, (10 percent sample size default)
@@ -17,12 +17,14 @@
 #' batch.estimate <- kBET(data,batch)
 
 #' @importFrom FNN get.knn
+#' @import ggplot2
+#' @importFrom RColorBrewer brewer.pal
 #' @include bisect.R
 #' @include kBET-utils.R
 #' @name kBET
 #' @export
 kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, stats=100, alpha=0.05, addTest = FALSE, verbose=TRUE, plot = TRUE){
- require('ggplot2')
+
 
   if (plot==TRUE & heuristic==TRUE){
     #source('addalpha.R')
@@ -30,12 +32,17 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
     colorset.nt <- brewer.pal(8, 'Set2')
   }
 
-  # if(addTest==TRUE){
-  #   #load adapted EMT package
-  #   path.name <- "EMT_adapted/" #how to adjust this? EMT_adapted was added to the repository
-  #   file.sources = list.files(path= path.name, pattern= "*.R")
-  #   sapply(paste0(path.name,file.sources),source,.GlobalEnv)
-  # }
+  #create a subsetting mode:
+  if (is.data.frame(batch) && dim(batch)[2]>1){
+    cat('Complex study design detected.\n')
+    design.names <- colnames(batch)
+    cat(paste0('Subset by ', design.names[[2]], '\n'))
+    bio <- unlist(unique(batch[[design.names[2]]]))
+    #drop subset batch
+    new.batch <- base::subset(batch, batch[[2]]== bio[1])[,!design.names %in% design.names[[2]]]
+    sapply(df[batch[[2]]==bio[1],], kBET, new.batch, k0, knn, testSize, heuristic,stats, alpha, addTest, verbose)
+
+  }
 
 
   #preliminaries:
@@ -55,19 +62,18 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   if (is.null(k0) || k0>=dim.dataset[1]){
     #default environment size: quarter the size of the largest batch
     k0=floor(mean(class.frequency$freq)*dim.dataset[1]/4)
-    cat('size of neighbourhood is set to ')
-    cat(paste0(k0, '\n'))
+    cat('Initial neighbourhood size is set to ')
+    cat(paste0(k0, '.\n'))
   }
   # find KNNs
   if (is.null(knn)){
-    require('FNN') #nearest neighbour search
     if (verbose) {
       cat('finding knns...')
       tic <- proc.time()
     }
     knn <- get.knn(dataset, k=k0, algorithm = 'cover_tree')
     if (verbose) {
-      cat('...done. Time:\n')
+      cat('done. Time:\n')
       print(proc.time() - tic)
     }
   }
@@ -75,25 +81,31 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   if (is.null(testSize) || dim.dataset[1]< testSize){
     test.frac <- 0.1
     testSize <- ceiling(dim.dataset[1]*test.frac)
-    cat('number of neighbourhood tests is set to ')
-    cat(paste0(testSize, '\n'))
+    if (verbose) {
+      cat('Number of kBET tests is set to ')
+      cat(paste0(testSize, '.\n'))
+    }
   }
 
   if(heuristic==TRUE){
     #source('bisect.R')
     myfun <- function(x,df,batch, knn){
-      res <- kBET(df=df, batch=batch, k0=x, knn=knn, testSize=NULL, heuristic=FALSE, stats=10, alpha=0.05, addTest = FALSE, plot=FALSE)
+      res <- kBET(df=df, batch=batch, k0=x, knn=knn, testSize=NULL, heuristic=FALSE, stats=10, alpha=0.05, addTest = FALSE, plot=FALSE, verbose=FALSE)
       result <- res$summary
       result <- result$kBET.observed[1]
     }
     #btw, when we bisect here that returns some interval with the optimal neihbourhood size
-    opt.k <- bisect(myfun, c(10,k0), df, batch, knn)
+    if (verbose){
+      cat('Determining optimal neighbourhood size ...')
+    }
+    opt.k <- bisect(myfun, bounds=c(10,k0), known=NULL, df, batch, knn)
     #result
     k0 <- opt.k[2]
     if(verbose==TRUE){
-      cat('The optimal neighbourhood size is determined.\n')
+      cat('done.\n')
+      #cat('The optimal neighbourhood size is determined.\n')
       cat('Size of neighbourhood is set to ')
-      cat(paste0(k0, '\n'))
+      cat(paste0(k0, '.\n'))
     }
     #heuristic was updated to an optimization based method instead of scanning method
     #plot of different test values now obsolete
@@ -336,7 +348,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
         cat(' subset results is not meaningful.')
       }
       if(plot==TRUE){
-        plot.data <- data.frame(class=rep(c('kBET', 'random assigment'), each=stats), data =  c( kBET.observed,kBET.expected))
+        plot.data <- data.frame(class=rep(c('observed(kBET)', 'expected(random)'), each=stats), data =  c( kBET.observed,kBET.expected))
         g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate') +
               scale_y_continuous(limits=c(0,1))
         print(g)

@@ -12,9 +12,6 @@ LazyData: true
 RoxygenNote: 6.0.1
 Collate: 
     'ExactMultinomialTest.R'
-    'ExactMultinomialTestChisquare.R'
-    'MonteCarloMultinomialTest.R'
-    'MonteCarloMultinomialTestChisquare.R'
     'addalpha.R'
     'batch_sil.R'
     'bisect.R'

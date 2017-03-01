@@ -51,7 +51,7 @@ lrt_approximation <- function(knn.set, class.freq, batch, df)
 
 }
 #truncated normal distribution distribution function
-ptnorm <- function(x,mu,sd, a=0, b=1, alpha=0.05){
+ptnorm <- function(x,mu,sd, a=0, b=1, alpha=0.05,verbose=FALSE){
   #this is the cumulative density of the truncated normal distribution
   #x ~ N(mu, sd^2), but we condition on a <= x <= b
   if(a>b){
@@ -62,7 +62,10 @@ ptnorm <- function(x,mu,sd, a=0, b=1, alpha=0.05){
   }
 
   if(sd<=0 | is.na(sd)) {
-    warning("Standard deviation must be positive.")
+    if(verbose)
+    {
+      warning("Standard deviation must be positive.")
+    }
     if (alpha<=0)
     {
       stop("False positive rate alpha must be positive.")

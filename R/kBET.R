@@ -33,16 +33,16 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   }
 
   #create a subsetting mode:
-  if (is.data.frame(batch) && dim(batch)[2]>1){
-    cat('Complex study design detected.\n')
-    design.names <- colnames(batch)
-    cat(paste0('Subset by ', design.names[[2]], '\n'))
-    bio <- unlist(unique(batch[[design.names[2]]]))
+  #if (is.data.frame(batch) && dim(batch)[2]>1){
+  #  cat('Complex study design detected.\n')
+  #  design.names <- colnames(batch)
+  #  cat(paste0('Subset by ', design.names[[2]], '\n'))
+  #  bio <- unlist(unique(batch[[design.names[2]]]))
     #drop subset batch
-    new.batch <- base::subset(batch, batch[[2]]== bio[1])[,!design.names %in% design.names[[2]]]
-    sapply(df[batch[[2]]==bio[1],], kBET, new.batch, k0, knn, testSize, heuristic,stats, alpha, addTest, verbose)
+  #  new.batch <- base::subset(batch, batch[[2]]== bio[1])[,!design.names %in% design.names[[2]]]
+  #  sapply(df[batch[[2]]==bio[1],], kBET, new.batch, k0, knn, testSize, heuristic,stats, alpha, addTest, verbose)
 
-  }
+  #}
 
 
   #preliminaries:
@@ -232,19 +232,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       #p-value distribution
       rejection$results$exact.pvalue.test[idx.runs] <- p.val.test.exact
       rejection$results$exact.pvalue.null[idx.runs] <- p.val.test.exact.null
-      if(plot==TRUE){
-        plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)', 'exact', 'exact (random)'), each=stats),
-                                data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected, exact.observed, exact.expected))
-        ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate')
-      }
-      if(plot==TRUE & !exists(x='exact.observed')){
-        plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)'), each=stats),
-                                data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected))
-        g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate') + scale_y_continuous(limits=c(0,1))
-        print(g)
-      }
     }
-    }
+
+  }
 
 
 
@@ -273,6 +263,20 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       cat(paste0(stats))
       cat(' subset results is not meaningful.')
     }
+
+    if(plot==TRUE){
+      plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)', 'exact', 'exact (random)'), each=stats),
+                              data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected, exact.observed, exact.expected))
+      g <-ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate')
+      print(g)
+    }
+    if(plot==TRUE & !exists(x='exact.observed')){
+      plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)'), each=stats),
+                              data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected))
+      g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate') + scale_y_continuous(limits=c(0,1))
+      print(g)
+    }
+
   }else{ #i.e. no stats
     rejection$summary$kBET.expected <- kBET.expected
     rejection$summary$kBET.observed <- kBET.observed

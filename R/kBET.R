@@ -51,7 +51,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
     batch <- droplevels(batch)
   }
   frequencies <- table(batch)/length(batch)
-
+  batch.shuff <- batch[sample.int(length(batch))]
 
   class.frequency <- data.frame(class = names(frequencies),
                                 freq = as.numeric(frequencies))
@@ -178,7 +178,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
 
     #perform test
     p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
-    p.val.test.null <- apply(env.rand, 1, FUN = chi_batch_test, class.frequency, batch, dof)
+    p.val.test.null <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch.shuff, dof)
 
     #summarise test results
     kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
@@ -189,6 +189,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
                                  mu=kBET.expected[i],
                                  sd=sqrt(kBET.expected[i]*(1-kBET.expected[i])/testSize),
                                  alpha=alpha)
+
     #assign results to result table
     rejection$results$tested[idx.runs] <- 1
     rejection$results$kBET.pvalue.test[idx.runs] <- p.val.test
@@ -197,7 +198,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
 
     #compute likelihood-ratio test (approximation for multinomial exact test)
     p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation, class.frequency, batch,  dof)
-    p.val.test.lrt.null <- apply(env.rand, 1, FUN = lrt_approximation, class.frequency, batch, dof)
+    p.val.test.lrt.null <- apply(env, 1, FUN = lrt_approximation, class.frequency, batch.shuff, dof)
 
     lrt.expected[i] <- sum(p.val.test.lrt.null < alpha) / length(p.val.test.lrt.null)
     lrt.observed[i] <- sum(p.val.test.lrt < alpha) / length(p.val.test.lrt)
@@ -216,10 +217,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
     #For example: k0=33 and dof=5 yields 501942 possible choices and a computation time of several seconds (on a 16GB RAM machine)
     if (exists(x='exact.observed')){
 
-      p.val.test.exact <- apply(env, 1, multiNom,
-        class.frequency$freq, batch)
+      p.val.test.exact <- apply(env, 1, multiNom,class.frequency$freq, batch)
 
-      p.val.test.exact.null <- apply(env.rand, 1, multiNom, class.frequency$freq, batch)
+      p.val.test.exact.null <- apply(env, 1, multiNom, class.frequency$freq, batch.shuff)
 
       exact.expected[i] <- sum(p.val.test.exact.null<alpha)/testSize
       exact.observed[i] <- sum(p.val.test.exact<alpha)/testSize
@@ -267,13 +267,16 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
     if(plot==TRUE){
       plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)', 'exact', 'exact (random)'), each=stats),
                               data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected, exact.observed, exact.expected))
-      g <-ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate')
+      g <-ggplot(plot.data, aes(class, data)) + geom_boxplot() +
+        theme_bw() + labs(x='Test', y='Rejection rate')  + theme(axis.text.x = element_text(angle=45, hjust = 1))
       print(g)
     }
     if(plot==TRUE & !exists(x='exact.observed')){
       plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)'), each=stats),
                               data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected))
-      g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate') + scale_y_continuous(limits=c(0,1))
+      g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() +
+        theme_bw() + labs(x='Test', y='Rejection rate') +
+        scale_y_continuous(limits=c(0,1))  + theme(axis.text.x = element_text(angle=45, hjust = 1))
       print(g)
     }
 
@@ -316,7 +319,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
 
       #perform test
       p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
-      p.val.test.null <- apply(env.rand, 1, FUN = chi_batch_test, class.frequency, batch, dof)
+      p.val.test.null <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch.shuff, dof)
 
       #summarise test results
       kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)

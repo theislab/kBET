@@ -43,7 +43,7 @@ pcRegression <- function(pca.data, batch, tol=1e-16){
       a <- lm(rot.data ~ batch)
       result <- numeric(2)
       result[1] <- summary(a)$r.squared #coefficient of determination
-      result[2] <- summary(a)$coefficients['batch',4] #p-value (significance level)
+      result[2] <- summary(a)$coefficients[2,4] #p-value (significance level)
       return(result)
   }
   r2.batch <- apply(pca.data$x, 2, correlate.fun, batch)

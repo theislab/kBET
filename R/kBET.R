@@ -264,7 +264,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       cat(' subset results is not meaningful.')
     }
 
-    if(plot==TRUE){
+    if(plot==TRUE & exists(x='exact.observed')){
       plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)', 'exact', 'exact (random)'), each=stats),
                               data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected, exact.observed, exact.expected))
       g <-ggplot(plot.data, aes(class, data)) + geom_boxplot() +

@@ -60,8 +60,14 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
   stopifnot(class(stats) == 'numeric', stats>0)
 
   if (is.null(k0) || k0>=dim.dataset[1]){
-    #default environment size: quarter the size of the largest batch
-    k0=floor(mean(class.frequency$freq)*dim.dataset[1]/4)
+    if(!heuristic){
+      #default environment size: quarter the size of the largest batch
+      k0=floor(mean(class.frequency$freq)*dim.dataset[1]/4)
+    }else{
+      #default environment size: size of the largest batch
+      k0=floor(mean(class.frequency$freq)*dim.dataset[1])
+    }
+
     cat('Initial neighbourhood size is set to ')
     cat(paste0(k0, '.\n'))
   }
@@ -100,13 +106,24 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
     }
     opt.k <- bisect(myfun, bounds=c(10,k0), known=NULL, df, batch, knn)
     #result
-    k0 <- opt.k[2]
-    if(verbose==TRUE){
-      cat('done.\n')
-      #cat('The optimal neighbourhood size is determined.\n')
-      cat('Size of neighbourhood is set to ')
-      cat(paste0(k0, '.\n'))
+    is(length(opt.k)>1){
+      k0 <- opt.k[2]
+      if(verbose==TRUE){
+        cat('done.\n')
+        #cat('The optimal neighbourhood size is determined.\n')
+        cat('Size of neighbourhood is set to ')
+        cat(paste0(k0, '.\n'))
+      }
+    }else{
+      if(verbose==TRUE){
+        cat('done.\n')
+        #cat('The optimal neighbourhood size is determined.\n')
+        cat('Heuristic did not change the neighbourhood.\n If results appear inconclusive, increase k0.')
+        cat(paste0(k0, '.\n'))
+      }
     }
+
+
     #heuristic was updated to an optimization based method instead of scanning method
     #plot of different test values now obsolete
 
@@ -264,7 +281,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       cat(' subset results is not meaningful.')
     }
 
-    if(plot==TRUE){
+    if(plot==TRUE & exists(x='exact.observed')){
       plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)', 'exact', 'exact (random)'), each=stats),
                               data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected, exact.observed, exact.expected))
       g <-ggplot(plot.data, aes(class, data)) + geom_boxplot() +

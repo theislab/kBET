@@ -106,7 +106,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
     }
     opt.k <- bisect(myfun, bounds=c(10,k0), known=NULL, df, batch, knn)
     #result
-    is(length(opt.k)>1){
+    if(length(opt.k)>1){
       k0 <- opt.k[2]
       if(verbose==TRUE){
         cat('done.\n')

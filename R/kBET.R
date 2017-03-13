@@ -67,9 +67,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       #default environment size: size of the largest batch
       k0=floor(mean(class.frequency$freq)*dim.dataset[1])
     }
-
-    cat('Initial neighbourhood size is set to ')
-    cat(paste0(k0, '.\n'))
+    if(verbose)
+    {cat('Initial neighbourhood size is set to ')
+    cat(paste0(k0, '.\n'))}
   }
   # find KNNs
   if (is.null(knn)){
@@ -118,7 +118,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       if(verbose==TRUE){
         cat('done.\n')
         #cat('The optimal neighbourhood size is determined.\n')
-        cat('Heuristic did not change the neighbourhood.\n If results appear inconclusive, increase k0.')
+        cat('Heuristic did not change the neighbourhood.\n If results appear inconclusive, increase k0=')
         cat(paste0(k0, '.\n'))
       }
     }

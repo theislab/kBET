@@ -95,16 +95,12 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
 
   if(heuristic==TRUE){
     #source('bisect.R')
-    myfun <- function(x,df,batch, knn){
-      res <- kBET(df=df, batch=batch, k0=x, knn=knn, testSize=NULL, heuristic=FALSE, stats=10, alpha=0.05, addTest = FALSE, plot=FALSE, verbose=FALSE)
-      result <- res$summary
-      result <- result$kBET.observed[1]
-    }
+    
     #btw, when we bisect here that returns some interval with the optimal neihbourhood size
     if (verbose){
       cat('Determining optimal neighbourhood size ...')
     }
-    opt.k <- bisect(myfun, bounds=c(10,k0), known=NULL, df, batch, knn)
+    opt.k <- bisect(scan_nb, bounds=c(10,k0), known=NULL, df, batch, knn)
     #result
     if(length(opt.k)>1){
       k0 <- opt.k[2]

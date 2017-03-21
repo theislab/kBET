@@ -7,6 +7,7 @@
 #' @param k0 number of nearest neighbours to test on (neighbourhood size)
 #' @param knn a set of nearest neighbours for each cell (optional)
 #' @param testSize number of data points to test, (10 percent sample size default)
+#' @param do.pca perform a pca prior to knn search? (defaults to TRUE)
 #' @param heuristic compute an optimal neighbourhood size k
 #' @param stats to create a statistics on batch estimates, evaluate 'stats' subsets
 #' @param alpha significance level
@@ -23,7 +24,7 @@
 #' @include kBET-utils.R
 #' @name kBET
 #' @export
-kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, stats=100, alpha=0.05, addTest = FALSE, verbose=TRUE, plot = TRUE){
+kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heuristic=FALSE, stats=100, alpha=0.05, addTest = FALSE, verbose=TRUE, plot = TRUE){
 
 
   if (plot==TRUE & heuristic==TRUE){
@@ -77,7 +78,13 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
       cat('finding knns...')
       tic <- proc.time()
     }
-    knn <- get.knn(dataset, k=k0, algorithm = 'cover_tree')
+    if(!do.pca){
+      knn <- get.knn(dataset, k=k0, algorithm = 'cover_tree')
+    }else{
+      data.pca <- prcomp(dataset, center=TRUE, tol = sqrt(.Machine$double.eps))
+      dim.comp <- min(50, dim(data.pca$x)[2])
+      knn <- get.knn(data.pca$x[,1:dim.comp],  k=k0, algorithm = 'cover_tree')
+    }
     if (verbose) {
       cat('done. Time:\n')
       print(proc.time() - tic)
@@ -95,7 +102,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,heuristic=FALSE, sta
 
   if(heuristic==TRUE){
     #source('bisect.R')
-    
+
     #btw, when we bisect here that returns some interval with the optimal neihbourhood size
     if (verbose){
       cat('Determining optimal neighbourhood size ...')

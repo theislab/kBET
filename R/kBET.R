@@ -52,7 +52,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     batch <- droplevels(batch)
   }
   frequencies <- table(batch)/length(batch)
-  batch.shuff <- batch[sample.int(length(batch))]
+  batch.shuff <- replicate(3, batch[sample.int(length(batch))]) #get 3 different permutations of the batch label
 
   class.frequency <- data.frame(class = names(frequencies),
                                 freq = as.numeric(frequencies))
@@ -81,9 +81,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     if(!do.pca){
       knn <- get.knn(dataset, k=k0, algorithm = 'cover_tree')
     }else{
-      data.pca <- prcomp(dataset, center=TRUE, tol = sqrt(.Machine$double.eps))
-      dim.comp <- min(50, dim(data.pca$x)[2])
-      knn <- get.knn(data.pca$x[,1:dim.comp],  k=k0, algorithm = 'cover_tree')
+      dim.comp <- min(50, dim.dataset[2])
+      data.pca <- svd(x= dataset,nu = dim.comp, nv=0)
+      knn <- get.knn(data.pca$u,  k=k0, algorithm = 'cover_tree')
     }
     if (verbose) {
       cat('done. Time:\n')
@@ -91,7 +91,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     }
   }
   #set number of tests
-  if (is.null(testSize) || dim.dataset[1]< testSize){
+  if (is.null(testSize) || (floor(testSize)<1 | dim.dataset[1]< testSize)){
     test.frac <- 0.1
     testSize <- ceiling(dim.dataset[1]*test.frac)
     if (verbose) {
@@ -100,9 +100,8 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     }
   }
 
-  if(heuristic==TRUE){
-    #source('bisect.R')
 
+  if(heuristic){
     #btw, when we bisect here that returns some interval with the optimal neihbourhood size
     if (verbose){
       cat('Determining optimal neighbourhood size ...')
@@ -112,71 +111,39 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     if(length(opt.k)>1){
       k0 <- opt.k[2]
       if(verbose==TRUE){
-        cat('done.\n')
-        #cat('The optimal neighbourhood size is determined.\n')
-        cat('Size of neighbourhood is set to ')
-        cat(paste0(k0, '.\n'))
+        cat(paste0('done.\n Size of neighbourhood is set to ', k0, '.\n'))
       }
     }else{
       if(verbose==TRUE){
-        cat('done.\n')
-        #cat('The optimal neighbourhood size is determined.\n')
-        cat('Heuristic did not change the neighbourhood.\n If results appear inconclusive, increase k0=')
-        cat(paste0(k0, '.\n'))
+        cat(paste0('done.\n Heuristic did not change the neighbourhood.\n If results appear inconclusive, increase k0=', k0, '.\n'))
       }
     }
-
-
-    #heuristic was updated to an optimization based method instead of scanning method
-    #plot of different test values now obsolete
-
-    # if (plot==TRUE){
-    #   k.frac <- 100*k/dim(df)[1]
-    #   data.null <- matrix(unlist(heuristics['kBET.expected',]), ncol=test.k)
-    #   data.kdep <- data.frame(neighbourhood=rep(c(k.frac, rev(k.frac)), 2),
-    #                           result=c(data.heu[2,], rev(data.heu[4,]), #chi2 observed
-    #                                    data.null[2,], rev(data.null[4,])), #chi2 expected
-    #                           test= as.factor(rep(c('kBET','chi2 expected'), each=2*length(k))))
-    #   data.kdep.points <- data.frame(neighbourhood=rep(k.frac,2), result= c(data.heu[1,], data.null[1,]),
-    #                                  test= as.factor(rep(c('kBET','chi2 expected'), each=length(k))))
-    #
-    #   p.heu <- ggplot(data.kdep, aes(x=neighbourhood, y=result)) +
-    #     geom_polygon(data=data.kdep, mapping=aes(x=neighbourhood, y=result, group=test, fill=test)) +
-    #     geom_line(data=data.kdep.points, mapping=aes(x=neighbourhood, y=result, color=test)) +
-    #     scale_color_manual(values = c('kBET' = colorset[1], 'chi2 expected'= colorset[2]),
-    #                        name = 'Test', breaks=c('kBET','chi2 expected'),
-    #                        labels = c('kBET', 'random\nassignment')) +
-    #     scale_fill_manual(values = c('kBET' = colorset[1], 'chi2 expected'= colorset[2]),
-    #                       name = 'Test', breaks=c('kBET','chi2 expected'),
-    #                       labels = c('kBET', 'random\nassignment')) +
-    #     labs(x= 'Neighbourhood size (in % sample size)', y = 'Rejection rate')+
-    #     geom_vline(aes(xintercept = k.frac[opt.k]),
-    #                linetype="dotted" , size=0.5)+
-    #     theme_bw()
-    #   print(p.heu)
-    # }
-
   }
 
-  if(addTest==TRUE){
-    #initialize result list
-  rejection <- list()
-  rejection$summary <- data.frame(kBET.expected = numeric(4),
-                                  kBET.observed = numeric(4),
-                                  lrt.expected = numeric(4),
-                                  lrt.observed = numeric(4)
-  )
+  #initialise result list
   kBET.expected <- numeric(stats)
   kBET.observed <- numeric(stats)
   kBET.signif <- numeric(stats)
+  rejection <- list()
+  rejection$summary <- data.frame(kBET.expected = numeric(4),
+                                  kBET.observed = numeric(4),
+                                  kBET.signif = numeric(4))
+
   rejection$results   <- data.frame(tested = numeric(dim.dataset[1]),
                                     kBET.pvalue.test = rep(0,dim.dataset[1]),
-                                    kBET.pvalue.null = rep(0, dim.dataset[1]),
-                                    lrt.pvalue.test = rep(0,dim.dataset[1]),
-                                    lrt.pvalue.null = rep(0, dim.dataset[1]))
-  lrt.expected <- numeric(stats)
-  lrt.observed <- numeric(stats)
-  lrt.signif <- numeric(stats)
+                                    kBET.pvalue.null = rep(0, dim.dataset[1]))
+
+  if(addTest==TRUE){
+    #initialize result list
+    rejection$summary$lrt.expected <- numeric(4)
+    rejection$summary$lrt.observed <- numeric(4)
+
+    rejection$results$lrt.pvalue.test <- rep(0,dim.dataset[1])
+    rejection$results$lrt.pvalue.null <- rep(0, dim.dataset[1])
+
+    lrt.expected <- numeric(stats)
+    lrt.observed <- numeric(stats)
+    lrt.signif <- numeric(stats)
   #decide to perform exact test or not
   if (choose(k0+dof,dof)<5e5 & k0 <= min(table(batch))){
     exact.expected <- numeric(stats)
@@ -193,12 +160,13 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     # choose a random sample from dataset (rows: samples, columns: parameters)
     idx.runs <- sample.int(dim.dataset[1], size = testSize)
     env <- cbind(knn$nn.index[idx.runs,1:(k0-1)], idx.runs)
-
-    env.rand <- t(sapply(rep(dim.dataset[1],testSize),  sample.int, k0))
+    #env.rand <- t(sapply(rep(dim.dataset[1],testSize),  sample.int, k0))
 
     #perform test
     p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
-    p.val.test.null <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch.shuff, dof)
+    p.val.test.null <-  apply(apply(batch.shuff, 2, function(x, freq, dof, envir) {
+      apply(envir, 1, FUN = chi_batch_test, freq, x, dof)},  class.frequency, dof, env), 1, max)
+    #p.val.test.null <- apply(env.rand, 1, FUN = chi_batch_test, class.frequency, batch, dof)
 
     #summarise test results
     kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
@@ -218,7 +186,8 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
 
     #compute likelihood-ratio test (approximation for multinomial exact test)
     p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation, class.frequency, batch,  dof)
-    p.val.test.lrt.null <- apply(env, 1, FUN = lrt_approximation, class.frequency, batch.shuff, dof)
+    p.val.test.lrt.null <- apply(apply(batch.shuff, 2, function(x, freq, dof, envir) {
+      apply(envir, 1, FUN = lrt_approximation, freq, x, dof)},  class.frequency, dof, env), 1, max)
 
     lrt.expected[i] <- sum(p.val.test.lrt.null < alpha) / length(p.val.test.lrt.null)
     lrt.observed[i] <- sum(p.val.test.lrt < alpha) / length(p.val.test.lrt)
@@ -238,8 +207,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     if (exists(x='exact.observed')){
 
       p.val.test.exact <- apply(env, 1, multiNom,class.frequency$freq, batch)
-
-      p.val.test.exact.null <- apply(env, 1, multiNom, class.frequency$freq, batch.shuff)
+      p.val.test.exact.null <-  apply(apply(batch.shuff, 2, function(x, freq, envir) {
+        apply(envir, 1, FUN = multiNom, freq, x)},  class.frequency$freq, env), 1, max)
+     # apply(env, 1, multiNom, class.frequency$freq, batch.shuff)
 
       exact.expected[i] <- sum(p.val.test.exact.null<alpha)/testSize
       exact.observed[i] <- sum(p.val.test.exact<alpha)/testSize
@@ -248,12 +218,10 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
                                     mu=exact.expected[i],
                                     sd=sqrt(exact.expected[i]*(1-exact.expected[i])/testSize),
                                     alpha=alpha)
-
       #p-value distribution
       rejection$results$exact.pvalue.test[idx.runs] <- p.val.test.exact
       rejection$results$exact.pvalue.null[idx.runs] <- p.val.test.exact.null
     }
-
   }
 
 
@@ -267,10 +235,8 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     rejection$summary$kBET.signif <- c(mean(kBET.signif) ,quantile(kBET.signif, CI95))
     #summarize lrt-results
     rejection$summary$lrt.expected <-  c(mean(lrt.expected) ,quantile(lrt.expected, CI95))
-
     rejection$summary$lrt.observed <-  c(mean(lrt.observed) ,quantile(lrt.observed, CI95))
     rejection$summary$lrt.signif <- c(mean(lrt.signif) ,quantile(lrt.signif, CI95))
-    #names(rejection$lrt.observed)[1] <-'mean'
     #summarize exact test results
     if (exists(x='exact.observed')){
       rejection$summary$exact.expected <-  c(mean(exact.expected) ,quantile(exact.expected, CI95))
@@ -318,28 +284,18 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
 
   }
   }else{ #kBET only
-    #initialize result list
-    rejection <- list()
-    rejection$summary <- data.frame(kBET.expected = numeric(4),
-                                    kBET.observed = numeric(4),
-                                    kBET.signif = numeric(4))
-    kBET.expected <- numeric(stats)
-    kBET.observed <- numeric(stats)
-    kBET.signif <- numeric(stats)
-    rejection$results   <- data.frame(tested = numeric(dim.dataset[1]),
-                                      kBET.pvalue.test = rep(0,dim.dataset[1]),
-                                      kBET.pvalue.null = rep(0, dim.dataset[1]))
+
 
       for (i in 1:stats){
       # choose a random sample from dataset (rows: samples, columns: parameters)
       idx.runs <- sample.int(dim.dataset[1], size = testSize)
       env <- cbind(knn$nn.index[idx.runs,1:(k0-1)], idx.runs)
 
-      env.rand <- t(sapply(rep(dim.dataset[1],testSize),  sample.int, k0))
-
       #perform test
       p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
-      p.val.test.null <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch.shuff, dof)
+      p.val.test.null <- apply(apply(batch.shuff, 2, function(x, freq, dof, envir) {
+        apply(envir, 1, FUN = chi_batch_test, freq, x, dof)},  class.frequency, dof, env), 1, max)
+      # p.val.test.null <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch.shuff, dof)
 
       #summarise test results
       kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)

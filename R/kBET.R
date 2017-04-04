@@ -52,7 +52,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     batch <- droplevels(batch)
   }
   frequencies <- table(batch)/length(batch)
-  batch.shuff <- replicate(3, batch[sample.int(length(batch))]) #get 3 different permutations of the batch label
+  batch.shuff <- replicate(2, batch[sample.int(length(batch))]) #get 3 different permutations of the batch label
 
   class.frequency <- data.frame(class = names(frequencies),
                                 freq = as.numeric(frequencies))
@@ -165,7 +165,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     #perform test
     p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
     p.val.test.null <-  apply(apply(batch.shuff, 2, function(x, freq, dof, envir) {
-      apply(envir, 1, FUN = chi_batch_test, freq, x, dof)},  class.frequency, dof, env), 1, max)
+      apply(envir, 1, FUN = chi_batch_test, freq, x, dof)},  class.frequency, dof, env), 1, mean)
     #p.val.test.null <- apply(env.rand, 1, FUN = chi_batch_test, class.frequency, batch, dof)
 
     #summarise test results
@@ -187,7 +187,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     #compute likelihood-ratio test (approximation for multinomial exact test)
     p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation, class.frequency, batch,  dof)
     p.val.test.lrt.null <- apply(apply(batch.shuff, 2, function(x, freq, dof, envir) {
-      apply(envir, 1, FUN = lrt_approximation, freq, x, dof)},  class.frequency, dof, env), 1, max)
+      apply(envir, 1, FUN = lrt_approximation, freq, x, dof)},  class.frequency, dof, env), 1, mean)
 
     lrt.expected[i] <- sum(p.val.test.lrt.null < alpha) / length(p.val.test.lrt.null)
     lrt.observed[i] <- sum(p.val.test.lrt < alpha) / length(p.val.test.lrt)
@@ -208,7 +208,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
 
       p.val.test.exact <- apply(env, 1, multiNom,class.frequency$freq, batch)
       p.val.test.exact.null <-  apply(apply(batch.shuff, 2, function(x, freq, envir) {
-        apply(envir, 1, FUN = multiNom, freq, x)},  class.frequency$freq, env), 1, max)
+        apply(envir, 1, FUN = multiNom, freq, x)},  class.frequency$freq, env), 1, mean)
      # apply(env, 1, multiNom, class.frequency$freq, batch.shuff)
 
       exact.expected[i] <- sum(p.val.test.exact.null<alpha)/testSize
@@ -293,12 +293,14 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
 
       #perform test
       p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
-      p.val.test.null <- apply(apply(batch.shuff, 2, function(x, freq, dof, envir) {
-        apply(envir, 1, FUN = chi_batch_test, freq, x, dof)},  class.frequency, dof, env), 1, max)
+      p.val.test.null <- apply(batch.shuff, 2, function(x, freq, dof, envir) {
+        apply(envir, 1, FUN = chi_batch_test, freq, x, dof)},  class.frequency, dof, env)
       # p.val.test.null <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch.shuff, dof)
 
       #summarise test results
-      kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
+      #kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
+      kBET.expected[i] <- mean(apply(p.val.test.null, 2, function(x,alpha) {sum(x < alpha) / length(x)}, alpha))
+
       kBET.observed[i] <- sum(p.val.test < alpha) / length(p.val.test)
 
       #compute significance
@@ -309,7 +311,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
       #assign results to result table
       rejection$results$tested[idx.runs] <- 1
       rejection$results$kBET.pvalue.test[idx.runs] <- p.val.test
-      rejection$results$kBET.pvalue.null[idx.runs] <- p.val.test.null
+      rejection$results$kBET.pvalue.null[idx.runs] <- rowMeans(p.val.test.null)
     }
 
     if (stats>1){

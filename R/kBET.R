@@ -52,7 +52,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     batch <- droplevels(batch)
   }
   frequencies <- table(batch)/length(batch)
-  batch.shuff <- replicate(2, batch[sample.int(length(batch))]) #get 3 different permutations of the batch label
+  batch.shuff <- replicate(3, batch[sample.int(length(batch))]) #get 3 different permutations of the batch label
 
   class.frequency <- data.frame(class = names(frequencies),
                                 freq = as.numeric(frequencies))

@@ -4,7 +4,7 @@
 \alias{kBET}
 \title{kBET - k-nearest neighbour batch effect test}
 \usage{
-kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL,
+kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
   heuristic = FALSE, stats = 100, alpha = 0.05, addTest = FALSE,
   verbose = TRUE, plot = TRUE)
 }
@@ -18,6 +18,8 @@ kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL,
 \item{knn}{a set of nearest neighbours for each cell (optional)}
 
 \item{testSize}{number of data points to test, (10 percent sample size default)}
+
+\item{do.pca}{perform a pca prior to knn search? (defaults to TRUE)}
 
 \item{heuristic}{compute an optimal neighbourhood size k}
 

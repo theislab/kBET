@@ -7,15 +7,23 @@
 batch_sil(pca.data, batch, nPCs = 3)
 }
 \arguments{
-\item{pca.data}{a list as created by 'prcomp', batch_sil.R needs $x: the principal components (PCs, correctly: the rotated data)}
+\item{pca.data}{a list as created by \code{prcomp}, \code{batch_sil.R} needs \code{$x}:
+the principal components (PCs, correctly: the rotated data)}
 
 \item{batch}{vector with the batch covariate (for each cell)}
 
 \item{nPCs}{the number of principal components to use (default: 3)}
 }
 \value{
-The average silhouette width for all clusters. For batch effect, the smaller the better. For biological effect, the larger the better.
+The average silhouette width for all clusters. For batch effect, the smaller the better.
+   For biological effect, the larger the better.
 }
 \description{
 Determine batch/bio effect using the silhouette coefficient (adopted from scone):
+}
+\examples{
+   \dontrun{
+    pca.data <- prcomp(data, center=TRUE)
+    batch.silhouette <- batch_sil(pca.data, batch)
+    }
 }

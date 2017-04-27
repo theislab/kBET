@@ -1,7 +1,16 @@
-
-#create bisection function
-#it evaluates the function foo at the bounds (a vector with exactly 2 entries) and
-#replaces one of the boundaries until a maximum is found or the interval becomes too small
+#' bisect - a generic bisection function
+#' @description provides recursive bisection algorithm for an arbitrary function
+#'    It evaluates the function \code{foo} at the bounds and
+#'    replaces one of the boundaries until a maximum is found or the interval becomes too small
+#' @param foo a function mapping a one-dim argument to one-dim value
+#'
+#' @param bounds a vector of length 2 with real valued numbers (i.e. two arguments of \code{foo})
+#' @param known tells for which of the arguments a value is known (defaults to NULL)
+#' @param ... additional parameters for \code{foo}
+#' @param tolx break condition for argument (defaults to 10)
+#' @param toly break condition for value (defaults to 0.01)
+#'
+#' @importFrom stats dist
 #' @export
 bisect <- function(foo, bounds, known=NULL,..., tolx = 10, toly = 0.01){
   if(is.null(known)){

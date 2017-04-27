@@ -6,12 +6,13 @@
 #' @param tol truncation threshold for significance level, default: 1e-16
 #' @return List summarising principal component regression
 #' \itemize{
-#'  \item maxVar: the variance explained by principal component(s) that correlate(s) most with the batch effect
-#'  \item PmaxVar: p-value (returned by linear model) for the respective principal components (related to maxVar)
-#' \item R2Var: sum over Var(PC_i)*r2(PC_i and batch) for all i
-#' \item ExplainedVar: explained variance for each PC
-#' \item r2: detailed results of correlation (R-Square) analysis
+#'  \item \code{maxVar} - the variance explained by principal component(s) that correlate(s) most with the batch effect
+#'  \item \code{PmaxVar} - p-value (returned by linear model) for the respective principal components (related to \code{maxVar})
+#' \item \code{R2Var} - sum over Var(PC_i)*r2(PC_i and batch) for all i
+#' \item \code{ExplainedVar} - explained variance for each PC
+#' \item \code{r2} - detailed results of correlation (R-Square) analysis
 #' }
+#' @importFrom stats t.test lm
 #' @export
 pcRegression <- function(pca.data, batch, tol=1e-16){
   batch.levels <- unique(batch)

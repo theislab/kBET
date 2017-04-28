@@ -29,14 +29,25 @@ kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
 
 \item{addTest}{perform an LRT-approximation to the multinomial test AND a multinomial exact test (if appropriate)}
 
+\item{verbose}{displays stages of current computation (defaults to TRUE)}
+
 \item{plot}{if stats > 10, then a boxplot of the resulting rejection rates is created}
 }
 \value{
-List with test summary - a rejection rate for the data, an expected rejection rate for random labeling and the significance for the observed result
+list object
+   \enumerate{
+   \item \code{summary} - a rejection rate for the data, an expected rejection rate for random
+        labeling and the significance for the observed result
+   \item \code{stats} - extended test summary for every sample
+   }
 }
 \description{
-kBET runs a chi square test to evaluate the probability of a batch effect.
+\code{kBET} runs a chi square test to evaluate the probability of a batch effect.
 }
 \examples{
-batch.estimate <- kBET(data,batch)
+     \dontshow{
+     batch <- rep(1:10,each=20)
+     data <- matrix(rpois(n = 50000, lambda = 10)*rbinom(50000,1,prob=0.5), ncol=200)
+     }
+    batch.estimate <- kBET(data,batch)
 }

@@ -1,6 +1,6 @@
 # kBET - k-nearest neighbour batch effect test
 
-An R package to provide a test for batch effects in high-dimensional single-cell RNA sequencing data. This test is based on Pearson's chi^2 test. However, we should state a few more words on the actual test.
+An R package to provide a test for batch effects in high-dimensional single-cell RNA sequencing data. It evaluates the accordance of replicates based on Pearson's chi^2 test. First, the algorithm creates k-nearest neighbour matrix and choses 10% of the samples to check the batch label distribution in its neighbourhood. If the local batch label distribution is sufficiently similar to the global batch label distribution, the chi^2-test does not reject the null hypothesis (that is "all batches are well-mixed"). The neighbourhood size k is fixed for all tests. Next, the test returns a binary result for each of the tested samples. Finally, the result of kBET is the average test rejection rate. The lower the test result, the less bias is introduced by the batch effect.  
 
 ## Usage of the *kBET* function:
 

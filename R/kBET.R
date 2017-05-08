@@ -70,6 +70,15 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
                                 freq = as.numeric(frequencies))
   dataset <- df
   dim.dataset <- dim(dataset)
+  #check the feasibility of data input
+  if(dim.dataset[1]==length(batch) & dim.dataset[2]!=length(batch)){
+    if(verbose){
+    cat('Input matrix has samples as columns. kBET needs samples as rows. Transposing...')
+    }
+    dataset <- t(dataset)
+  }
+
+
   stopifnot(class(stats) == 'numeric', stats>0)
 
   if (is.null(k0) || k0>=dim.dataset[1]){

@@ -365,6 +365,17 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
       rejection$summary$kBET.signif <- kBET.signif[1]
     }
   }
+  #collect parameters
+  rejection$params <- list()
+  rejection$params$k0 <- k0
+  rejection$params$testSize <- testSize
+  rejection$params$do.pca <- do.pca
+  rejection$params$heuristic <- heuristic
+  rejection$params$stats <- stats
+  rejection$params$alpha <- alpha
+  rejection$params$addTest <- addTest
+  rejection$params$verbose <- verbose
+  rejection$params$plot <- plot
 
   return(rejection)
 }

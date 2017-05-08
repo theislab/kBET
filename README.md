@@ -21,7 +21,7 @@ The standard implementation of *kBET* performs a *k-nearest neighbour search* (i
 ```R
 require('FNN')
 # data: a matrix (rows: samples, columns: features (genes))
-k0=floor(mean(table(batch)) #neighbourhood size: mean batch size 
+k0=floor(mean(table(batch))) #neighbourhood size: mean batch size 
 knn <- get.knn(data, k=k0, algorithm = 'cover_tree')
 
 #now run kBET with pre-defined nearest neighbours.

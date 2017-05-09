@@ -141,11 +141,11 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     if(length(opt.k)>1){
       k0 <- opt.k[2]
       if(verbose==TRUE){
-        cat(paste0('done.\n Size of neighbourhood is set to ', k0, '.\n'))
+        cat(paste0('done.\nNew size of neighbourhood is set to ', k0, '.\n'))
       }
     }else{
       if(verbose==TRUE){
-        cat(paste0('done.\n Heuristic did not change the neighbourhood.\n If results appear inconclusive, increase k0=', k0, '.\n'))
+        cat(paste0('done.\nHeuristic did not change the neighbourhood.\n If results appear inconclusive, increase k0=', k0, '.\n'))
       }
     }
   }

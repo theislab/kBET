@@ -8,7 +8,7 @@
 #' @param knn a set of nearest neighbours for each cell (optional)
 #' @param testSize number of data points to test, (10 percent sample size default)
 #' @param do.pca perform a pca prior to knn search? (defaults to TRUE)
-#' @param heuristic compute an optimal neighbourhood size k
+#' @param heuristic compute an optimal neighbourhood size k (defaults to TRUE)
 #' @param stats to create a statistics on batch estimates, evaluate 'stats' subsets
 #' @param alpha significance level
 #' @param addTest perform an LRT-approximation to the multinomial test AND a multinomial exact test (if appropriate)
@@ -36,7 +36,7 @@
 #' @include kBET-utils.R
 #' @name kBET
 #' @export
-kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heuristic=FALSE, stats=100, alpha=0.05, addTest = FALSE, verbose=TRUE, plot = TRUE){
+kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heuristic=TRUE, stats=100, alpha=0.05, addTest = FALSE, verbose=TRUE, plot = TRUE){
 
 
   if (plot==TRUE & heuristic==TRUE){
@@ -76,6 +76,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     cat('Input matrix has samples as columns. kBET needs samples as rows. Transposing...\n')
     }
     dataset <- t(dataset)
+    dim.dataset <- dim(dataset)
   }
 
 
@@ -95,15 +96,23 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
   }
   # find KNNs
   if (is.null(knn)){
-    if (verbose) {
-      cat('finding knns...')
-      tic <- proc.time()
-    }
+
     if(!do.pca){
+      if (verbose) {
+        cat('finding knns...')
+        tic <- proc.time()
+      }
       knn <- get.knn(dataset, k=k0, algorithm = 'cover_tree')
     }else{
       dim.comp <- min(50, dim.dataset[2])
+      if(verbose)
+      {cat('reducing dimensions with svd first...\n')
+        }
       data.pca <- svd(x= dataset,nu = dim.comp, nv=0)
+      if (verbose) {
+        cat('finding knns...')
+        tic <- proc.time()
+      }
       knn <- get.knn(data.pca$u,  k=k0, algorithm = 'cover_tree')
     }
     if (verbose) {
@@ -127,7 +136,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     if (verbose){
       cat('Determining optimal neighbourhood size ...')
     }
-    opt.k <- bisect(scan_nb, bounds=c(10,k0), known=NULL, df, batch, knn)
+    opt.k <- bisect(scan_nb, bounds=c(10,k0), known=NULL, dataset, batch, knn)
     #result
     if(length(opt.k)>1){
       k0 <- opt.k[2]
@@ -365,6 +374,17 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
       rejection$summary$kBET.signif <- kBET.signif[1]
     }
   }
+  #collect parameters
+  rejection$params <- list()
+  rejection$params$k0 <- k0
+  rejection$params$testSize <- testSize
+  rejection$params$do.pca <- do.pca
+  rejection$params$heuristic <- heuristic
+  rejection$params$stats <- stats
+  rejection$params$alpha <- alpha
+  rejection$params$addTest <- addTest
+  rejection$params$verbose <- verbose
+  rejection$params$plot <- plot
 
   return(rejection)
 }

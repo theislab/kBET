@@ -136,7 +136,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     if (verbose){
       cat('Determining optimal neighbourhood size ...')
     }
-    opt.k <- bisect(scan_nb, bounds=c(10,k0), known=NULL, df, batch, knn)
+    opt.k <- bisect(scan_nb, bounds=c(10,k0), known=NULL, dataset, batch, knn)
     #result
     if(length(opt.k)>1){
       k0 <- opt.k[2]

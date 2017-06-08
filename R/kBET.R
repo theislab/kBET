@@ -6,7 +6,7 @@
 #' @param batch batch id for each cell or a data frame with both condition and replicates
 #' @param k0 number of nearest neighbours to test on (neighbourhood size)
 #' @param knn a set of nearest neighbours for each cell (optional)
-#' @param testSize number of data points to test, (10 percent sample size default)
+#' @param testSize number of data points to test, (10 percent sample size default, but at least 25)
 #' @param do.pca perform a pca prior to knn search? (defaults to TRUE)
 #' @param heuristic compute an optimal neighbourhood size k (defaults to TRUE)
 #' @param stats to create a statistics on batch estimates, evaluate 'stats' subsets
@@ -71,6 +71,10 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
   dataset <- df
   dim.dataset <- dim(dataset)
   #check the feasibility of data input
+  if(dim.dataset[1]!=length(batch) & dim.dataset[2]!=length(batch)){
+    stop("Input matrix and batch information do not match. Execution halted.")
+  }
+
   if(dim.dataset[2]==length(batch) & dim.dataset[1]!=length(batch)){
     if(verbose){
     cat('Input matrix has samples as columns. kBET needs samples as rows. Transposing...\n')
@@ -124,6 +128,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
   if (is.null(testSize) || (floor(testSize)<1 | dim.dataset[1]< testSize)){
     test.frac <- 0.1
     testSize <- ceiling(dim.dataset[1]*test.frac)
+    if (testSize<25 & dim.dataset[1]>25){
+      testSize <- 25
+    }
     if (verbose) {
       cat('Number of kBET tests is set to ')
       cat(paste0(testSize, '.\n'))
@@ -141,11 +148,11 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     if(length(opt.k)>1){
       k0 <- opt.k[2]
       if(verbose==TRUE){
-        cat(paste0('done.\n Size of neighbourhood is set to ', k0, '.\n'))
+        cat(paste0('done.\nNew size of neighbourhood is set to ', k0, '.\n'))
       }
     }else{
       if(verbose==TRUE){
-        cat(paste0('done.\n Heuristic did not change the neighbourhood.\n If results appear inconclusive, increase k0=', k0, '.\n'))
+        cat(paste0('done.\nHeuristic did not change the neighbourhood.\n If results appear inconclusive, increase k0=', k0, '.\n'))
       }
     }
   }

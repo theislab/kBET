@@ -18,7 +18,7 @@ install_github('https://github.com/theislab/kBET')
 Please download the package as `zip` archive and install it via
 
 ```R
-install.packages('kBET.zip', repos=NULL, type='source')
+install.packages('kBET.zip', repos = NULL, type = 'source')
 ```
 
 ## Usage of the *kBET* function:
@@ -28,7 +28,7 @@ install.packages('kBET.zip', repos=NULL, type='source')
 #batch: vector or factor with batch label of each cell 
 batch.estimate <- kBET(data, batch)
 ```
-*kBET* creates (if `plot =TRUE`) a boxplot of the *kBET* rejection rates (for neighbourhoods and randomly chosen subsets of size *k*) and *kBET* returns a list with two parts:
+*kBET* creates (if `plot = TRUE`) a boxplot of the *kBET* rejection rates (for neighbourhoods and randomly chosen subsets of size *k*) and *kBET* returns a list with two parts:
 
 * *summary*: summarizes the test results (with $95\,\%$ confidence interval)
 * *results*: the p-values of all tested samples 
@@ -37,7 +37,7 @@ batch.estimate <- kBET(data, batch)
 
 ### Plot *kBET*'s rejection rate
 
-By default (`plot=TRUE`), *kBET* returns a boxplot of observed and expected rejection rates for a data set. You might want to turn off the display of these plots and create them elsewhere. *kBET* returns all information that is needed in the `stats` part of the results. 
+By default (`plot = TRUE`), *kBET* returns a boxplot of observed and expected rejection rates for a data set. You might want to turn off the display of these plots and create them elsewhere. *kBET* returns all information that is needed in the `stats` part of the results. 
 
 ``` R
 library(ggplot2)

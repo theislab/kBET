@@ -97,3 +97,5 @@ multiNom <- function(x, y, z) {
   z.f <- factor(z)
   tmp <- multinomial.test(as.numeric(table(z.f[x])),y)
   return(tmp$p.value)}
+
+

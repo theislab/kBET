@@ -2,10 +2,6 @@
 title: "kBET short introduction"
 author: "Maren Büttner"
 date: "6/27/2017"
-output: 
-  prettydoc::html_pretty:
-    theme: cayman
-    highlight: vignette
 ---
 
 # kBET - k-nearest neighbour batch effect test

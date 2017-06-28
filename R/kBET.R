@@ -11,6 +11,8 @@
 #' @param heuristic compute an optimal neighbourhood size k (defaults to TRUE)
 #' @param stats to create a statistics on batch estimates, evaluate 'stats' subsets
 #' @param alpha significance level
+#' @param adapt In some cases, a number of cells do not contribute to any neighbourhood
+#' and this may cause an imbalance in observed and expected batch label frequencies. Frequencies will be adapted if adapt=TRUE (default).
 #' @param addTest perform an LRT-approximation to the multinomial test AND a multinomial exact test (if appropriate)
 #' @param plot if stats > 10, then a boxplot of the resulting rejection rates is created
 #' @param verbose displays stages of current computation (defaults to TRUE)
@@ -36,7 +38,10 @@
 #' @include kBET-utils.R
 #' @name kBET
 #' @export
-kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heuristic=TRUE, stats=100, alpha=0.05, addTest = FALSE, verbose=TRUE, plot = TRUE){
+kBET <- function(df, batch, k0=NULL,knn=NULL,
+                 testSize=NULL,do.pca=TRUE, heuristic=TRUE,
+                 stats=100, alpha=0.05, addTest = FALSE,
+                 verbose=TRUE, plot = TRUE, adapt=TRUE){
 
 
   if (plot==TRUE & heuristic==TRUE){
@@ -63,6 +68,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
   if(is.factor(batch)){
     batch <- droplevels(batch)
   }
+
   frequencies <- table(batch)/length(batch)
   batch.shuff <- replicate(3, batch[sample.int(length(batch))]) #get 3 different permutations of the batch label
 
@@ -124,6 +130,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
       print(proc.time() - tic)
     }
   }
+
   #set number of tests
   if (is.null(testSize) || (floor(testSize)<1 | dim.dataset[1]< testSize)){
     test.frac <- 0.1
@@ -136,7 +143,24 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
       cat(paste0(testSize, '.\n'))
     }
   }
-
+  #decide to adapt general frequencies
+  if(adapt){
+    idx.run <- sample.int(dim.dataset[1], size = min(2*testSize, dim.dataset[1]))
+    outsider <- which(!(1:dim.dataset[1] %in% knn$nn.index[,1:(k0-1)]))
+    outsider.batch <- table(batch[outsider])
+    p.out <- chi_batch_test(outsider, class.frequency, batch,  dof)
+    is.imbalanced <- p.out < alpha
+    if(is.imbalanced){
+      new.frequencies <- table(batch[-outsider])/length(batch[-outsider])
+      new.class.frequency <- data.frame(class = names(new.frequencies),
+                                    freq = as.numeric(new.frequencies))
+      if(verbose){
+        cat(paste0('There are ', length(outsider), ' cells that do not appear in any neighbourhood.\n',
+                   'The expected frequencies for each category have been adapted.\n',
+                   'Cell indexes are saved to result list.\n'))
+      }
+    }
+  }
 
   if(heuristic){
     #btw, when we bisect here that returns some interval with the optimal neihbourhood size
@@ -156,6 +180,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
       }
     }
   }
+
+
+
 
   #initialise result list
   kBET.expected <- numeric(stats)
@@ -200,7 +227,12 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     #env.rand <- t(sapply(rep(dim.dataset[1],testSize),  sample.int, k0))
 
     #perform test
-    p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
+    if(adapt && is.imbalanced){
+      p.val.test <- apply(env, 1, FUN = chi_batch_test, new.class.frequency, batch,  dof)
+    }else{
+      p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
+    }
+    #p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
     p.val.test.null <-  apply(apply(batch.shuff, 2, function(x, freq, dof, envir) {
       apply(envir, 1, FUN = chi_batch_test, freq, x, dof)},  class.frequency, dof, env), 1, mean)
     #p.val.test.null <- apply(env.rand, 1, FUN = chi_batch_test, class.frequency, batch, dof)
@@ -222,7 +254,11 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
 
 
     #compute likelihood-ratio test (approximation for multinomial exact test)
-    p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation, class.frequency, batch,  dof)
+    if(adapt && is.imbalanced){
+      p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation, new.class.frequency, batch,  dof)
+    }else{
+      p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation, class.frequency, batch,  dof)
+    }
     p.val.test.lrt.null <- apply(apply(batch.shuff, 2, function(x, freq, dof, envir) {
       apply(envir, 1, FUN = lrt_approximation, freq, x, dof)},  class.frequency, dof, env), 1, mean)
 
@@ -242,8 +278,11 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
     #possible configurations (under the assumption that all batches are large enough to 'imitate' sampling with replacement)
     #For example: k0=33 and dof=5 yields 501942 possible choices and a computation time of several seconds (on a 16GB RAM machine)
     if (exists(x='exact.observed')){
-
-      p.val.test.exact <- apply(env, 1, multiNom,class.frequency$freq, batch)
+      if(adapt && is.imbalanced){
+        p.val.test.exact <- apply(env, 1, multiNom,new.class.frequency$freq, batch)
+      }else{
+        p.val.test.exact <- apply(env, 1, multiNom,class.frequency$freq, batch)
+      }
       p.val.test.exact.null <-  apply(apply(batch.shuff, 2, function(x, freq, envir) {
         apply(envir, 1, FUN = multiNom, freq, x)},  class.frequency$freq, env), 1, mean)
      # apply(env, 1, multiNom, class.frequency$freq, batch.shuff)
@@ -329,7 +368,12 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
       env <- cbind(knn$nn.index[idx.runs,1:(k0-1)], idx.runs)
 
       #perform test
-      p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
+      if(adapt && is.imbalanced){
+        p.val.test <- apply(env, 1, FUN = chi_batch_test, new.class.frequency, batch,  dof)
+      }else{
+        p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch,  dof)
+      }
+
       p.val.test.null <- apply(batch.shuff, 2, function(x, freq, dof, envir) {
         apply(envir, 1, FUN = chi_batch_test, freq, x, dof)},  class.frequency, dof, env)
       # p.val.test.null <- apply(env, 1, FUN = chi_batch_test, class.frequency, batch.shuff, dof)
@@ -393,6 +437,13 @@ kBET <- function(df, batch, k0=NULL,knn=NULL, testSize=NULL,do.pca=TRUE, heurist
   rejection$params$verbose <- verbose
   rejection$params$plot <- plot
 
+  #add outsiders
+  if(adapt && is.imbalanced){
+    rejection$outsider <-list()
+    rejection$outsider$index <- outsider
+    rejection$outsider$categories <- table(batch[outsider])
+    rejection$outsider$p.val <- p.out
+  }
   return(rejection)
 }
 

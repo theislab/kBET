@@ -4,7 +4,7 @@
 \alias{bisect}
 \title{bisect - a generic bisection function}
 \usage{
-bisect(foo, bounds, known = NULL, ..., tolx = 10, toly = 0.01)
+bisect(foo, bounds, known = NULL, ..., tolx = 5, toly = 0.01)
 }
 \arguments{
 \item{foo}{a function mapping a one-dim argument to one-dim value}

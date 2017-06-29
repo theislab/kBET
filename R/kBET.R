@@ -145,7 +145,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   }
   #decide to adapt general frequencies
   if(adapt){
-    idx.run <- sample.int(dim.dataset[1], size = min(2*testSize, dim.dataset[1]))
+   # idx.run <- sample.int(dim.dataset[1], size = min(2*testSize, dim.dataset[1]))
     outsider <- which(!(1:dim.dataset[1] %in% knn$nn.index[,1:(k0-1)]))
     outsider.batch <- table(batch[outsider])
     p.out <- chi_batch_test(outsider, class.frequency, batch,  dof)
@@ -155,7 +155,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       new.class.frequency <- data.frame(class = names(new.frequencies),
                                     freq = as.numeric(new.frequencies))
       if(verbose){
-        cat(paste0('There are ', length(outsider), ' cells that do not appear in any neighbourhood.\n',
+        cat(paste0('There are ', length(outsider), ' cells (',round(length(outsider)/length(batch),1),'%) that do not appear in any neighbourhood.\n',
                    'The expected frequencies for each category have been adapted.\n',
                    'Cell indexes are saved to result list.\n'))
       }
@@ -181,13 +181,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
     }
   }
 
-
-
-
   #initialise result list
-  kBET.expected <- numeric(stats)
-  kBET.observed <- numeric(stats)
-  kBET.signif <- numeric(stats)
   rejection <- list()
   rejection$summary <- data.frame(kBET.expected = numeric(4),
                                   kBET.observed = numeric(4),
@@ -196,6 +190,21 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   rejection$results   <- data.frame(tested = numeric(dim.dataset[1]),
                                     kBET.pvalue.test = rep(0,dim.dataset[1]),
                                     kBET.pvalue.null = rep(0, dim.dataset[1]))
+
+  #get average residual score
+  env <- as.vector(cbind(knn$nn.index[,1:(k0-1)], 1:dim.dataset[1]))
+  if(adapt && is.imbalanced){
+    rejection$average.pval <- 1-pchisq(k0*residual_score_batch(env, new.class.frequency, batch), dof)
+  }else{
+    rejection$average.pval <- 1-pchisq(k0*residual_score_batch(env, class.frequency, batch), dof)
+  }
+
+
+  #initialise intermediates
+  kBET.expected <- numeric(stats)
+  kBET.observed <- numeric(stats)
+  kBET.signif <- numeric(stats)
+
 
   if(addTest==TRUE){
     #initialize result list

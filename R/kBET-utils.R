@@ -6,6 +6,20 @@ scan_nb <- function(x,df,batch, knn){
     result <- result$kBET.observed[1]
 }
 
+#the residual score function of kBET
+residual_score_batch <- function(knn.set, class.freq, batch)
+{
+  #knn.set: indices of nearest neighbours
+  #empirical frequencies in nn-environment (sample 1)
+  freq.env <- table(batch[knn.set])/length(knn.set)
+  full.classes <- rep(0, length(class.freq$class))
+  full.classes[ class.freq$class %in% names(freq.env)] <- freq.env
+  exp.freqs <- class.freq$freq
+  #compute chi-square test statistics
+  resScore <- sum((full.classes - exp.freqs)^2/exp.freqs)
+  return(resScore)
+}
+
 
 #the core function of kBET
 chi_batch_test <- function(knn.set, class.freq, batch, df)

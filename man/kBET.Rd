@@ -5,8 +5,8 @@
 \title{kBET - k-nearest neighbour batch effect test}
 \usage{
 kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
-  heuristic = FALSE, stats = 100, alpha = 0.05, addTest = FALSE,
-  verbose = TRUE, plot = TRUE)
+  heuristic = TRUE, stats = 100, alpha = 0.05, addTest = FALSE,
+  verbose = TRUE, plot = TRUE, adapt = TRUE)
 }
 \arguments{
 \item{df}{dataset (rows: samples, columns: parameters)}
@@ -17,11 +17,11 @@ kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
 
 \item{knn}{a set of nearest neighbours for each cell (optional)}
 
-\item{testSize}{number of data points to test, (10 percent sample size default)}
+\item{testSize}{number of data points to test, (10 percent sample size default, but at least 25)}
 
 \item{do.pca}{perform a pca prior to knn search? (defaults to TRUE)}
 
-\item{heuristic}{compute an optimal neighbourhood size k}
+\item{heuristic}{compute an optimal neighbourhood size k (defaults to TRUE)}
 
 \item{stats}{to create a statistics on batch estimates, evaluate 'stats' subsets}
 
@@ -32,6 +32,9 @@ kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
 \item{verbose}{displays stages of current computation (defaults to TRUE)}
 
 \item{plot}{if stats > 10, then a boxplot of the resulting rejection rates is created}
+
+\item{adapt}{In some cases, a number of cells do not contribute to any neighbourhood
+and this may cause an imbalance in observed and expected batch label frequencies. Frequencies will be adapted if adapt=TRUE (default).}
 }
 \value{
 list object

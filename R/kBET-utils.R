@@ -1,9 +1,23 @@
 #' @importFrom stats pchisq pnorm
 #a wrapper for kBET to fix a neighbourhood size
 scan_nb <- function(x,df,batch, knn){
-    res <- kBET(df=df, batch=batch, k0=x, knn=knn, testSize=NULL, heuristic=FALSE, stats=10, alpha=0.05, addTest = FALSE, plot=FALSE, verbose=FALSE)
+    res <- kBET(df=df, batch=batch, k0=x, knn=knn, testSize=NULL, heuristic=FALSE, stats=10, alpha=0.05, addTest = FALSE, plot=FALSE, verbose=FALSE, adapt=FALSE)
     result <- res$summary
     result <- result$kBET.observed[1]
+}
+
+#the residual score function of kBET
+residual_score_batch <- function(knn.set, class.freq, batch)
+{
+  #knn.set: indices of nearest neighbours
+  #empirical frequencies in nn-environment (sample 1)
+  freq.env <- table(batch[knn.set])/length(knn.set)
+  full.classes <- rep(0, length(class.freq$class))
+  full.classes[ class.freq$class %in% names(freq.env)] <- freq.env
+  exp.freqs <- class.freq$freq
+  #compute chi-square test statistics
+  resScore <- sum((full.classes - exp.freqs)^2/exp.freqs)
+  return(resScore)
 }
 
 

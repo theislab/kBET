@@ -114,7 +114,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       }
       knn <- get.knn(dataset, k=k0, algorithm = 'cover_tree')
     }else{
-      dim.comp <- min(50, dim.dataset[2])
+      dim.comp <- min(20, dim.dataset[2])
       if(verbose)
       {cat('reducing dimensions with svd first...\n')
         }
@@ -155,7 +155,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       new.class.frequency <- data.frame(class = names(new.frequencies),
                                     freq = as.numeric(new.frequencies))
       if(verbose){
-        cat(paste0('There are ', length(outsider), ' cells (',round(length(outsider)/length(batch),1),'%) that do not appear in any neighbourhood.\n',
+        cat(paste0('There are ', length(outsider), ' cells (',round(length(outsider)/length(batch),3),'%) that do not appear in any neighbourhood.\n',
                    'The expected frequencies for each category have been adapted.\n',
                    'Cell indexes are saved to result list.\n'))
       }

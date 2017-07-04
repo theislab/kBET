@@ -155,7 +155,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       new.class.frequency <- data.frame(class = names(new.frequencies),
                                     freq = as.numeric(new.frequencies))
       if(verbose){
-        cat(paste0('There are ', length(outsider), ' cells (',round(length(outsider)/length(batch),3),'%) that do not appear in any neighbourhood.\n',
+        cat(paste0('There are ', length(outsider), ' cells (',round(length(outsider)/length(batch)*100,3),'%) that do not appear in any neighbourhood.\n',
                    'The expected frequencies for each category have been adapted.\n',
                    'Cell indexes are saved to result list.\n'))
       }
@@ -447,7 +447,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   rejection$params$plot <- plot
 
   #add outsiders
-  if(adapt && is.imbalanced){
+  if(adapt){
     rejection$outsider <-list()
     rejection$outsider$index <- outsider
     rejection$outsider$categories <- table(batch[outsider])

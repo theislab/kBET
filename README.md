@@ -16,7 +16,7 @@ If you want to install the package directly from Github, I recommend to use the 
 
 ```R
 library(devtools)
-install_github('https://github.com/theislab/kBET')
+install_github('theislab/kBET')
 ```
 
 ### Manually

@@ -9,13 +9,13 @@
 #' @param testSize number of data points to test, (10 percent sample size default, but at least 25)
 #' @param do.pca perform a pca prior to knn search? (defaults to TRUE)
 #' @param heuristic compute an optimal neighbourhood size k (defaults to TRUE)
-#' @param stats to create a statistics on batch estimates, evaluate 'stats' subsets
+#' @param n_repeat to create a statistics on batch estimates, evaluate 'n_repeat' subsets
 #' @param alpha significance level
 #' @param adapt In some cases, a number of cells do not contribute to any neighbourhood
 #' and this may cause an imbalance in observed and expected batch label frequencies. Frequencies will be adapted if adapt=TRUE (default).
 #' @param addTest perform an LRT-approximation to the multinomial test AND a multinomial exact test (if appropriate)
 #' @param plot if stats > 10, then a boxplot of the resulting rejection rates is created
-#' @param verbose displays stages of current computation (defaults to TRUE)
+#' @param verbose displays stages of current computation (defaults to FALSE)
 #' @return list object
 #'    \enumerate{
 #'    \item \code{summary} - a rejection rate for the data, an expected rejection rate for random
@@ -31,7 +31,7 @@
 
 #' @importFrom FNN get.knn
 #' @import ggplot2
-#' @importFrom stats quantile
+#' @importFrom stats quantile pchisq
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom utils data
 #' @include bisect.R
@@ -40,8 +40,8 @@
 #' @export
 kBET <- function(df, batch, k0=NULL,knn=NULL,
                  testSize=NULL,do.pca=TRUE, heuristic=TRUE,
-                 stats=100, alpha=0.05, addTest = FALSE,
-                 verbose=TRUE, plot = TRUE, adapt=TRUE){
+                 n_repeat=100, alpha=0.05, addTest = FALSE,
+                 verbose=FALSE, plot = TRUE, adapt=TRUE){
 
 
   if (plot==TRUE & heuristic==TRUE){
@@ -58,7 +58,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   #  bio <- unlist(unique(batch[[design.names[2]]]))
     #drop subset batch
   #  new.batch <- base::subset(batch, batch[[2]]== bio[1])[,!design.names %in% design.names[[2]]]
-  #  sapply(df[batch[[2]]==bio[1],], kBET, new.batch, k0, knn, testSize, heuristic,stats, alpha, addTest, verbose)
+  #  sapply(df[batch[[2]]==bio[1],], kBET, new.batch, k0, knn, testSize, heuristic,n_repeat, alpha, addTest, verbose)
 
   #}
 
@@ -90,7 +90,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   }
 
 
-  stopifnot(class(stats) == 'numeric', stats>0)
+  stopifnot(class(n_repeat) == 'numeric', n_repeat>0)
 
   if (is.null(k0) || k0>=dim.dataset[1]){
     if(!heuristic){
@@ -114,7 +114,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       }
       knn <- get.knn(dataset, k=k0, algorithm = 'cover_tree')
     }else{
-      dim.comp <- min(20, dim.dataset[2])
+      dim.comp <- min(50, dim.dataset[2])
       if(verbose)
       {cat('reducing dimensions with svd first...\n')
         }
@@ -201,9 +201,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
 
 
   #initialise intermediates
-  kBET.expected <- numeric(stats)
-  kBET.observed <- numeric(stats)
-  kBET.signif <- numeric(stats)
+  kBET.expected <- numeric(n_repeat)
+  kBET.observed <- numeric(n_repeat)
+  kBET.signif <- numeric(n_repeat)
 
 
   if(addTest==TRUE){
@@ -214,14 +214,14 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
     rejection$results$lrt.pvalue.test <- rep(0,dim.dataset[1])
     rejection$results$lrt.pvalue.null <- rep(0, dim.dataset[1])
 
-    lrt.expected <- numeric(stats)
-    lrt.observed <- numeric(stats)
-    lrt.signif <- numeric(stats)
+    lrt.expected <- numeric(n_repeat)
+    lrt.observed <- numeric(n_repeat)
+    lrt.signif <- numeric(n_repeat)
   #decide to perform exact test or not
   if (choose(k0+dof,dof)<5e5 & k0 <= min(table(batch))){
-    exact.expected <- numeric(stats)
-    exact.observed <- numeric(stats)
-    exact.signif <- numeric(stats)
+    exact.expected <- numeric(n_repeat)
+    exact.observed <- numeric(n_repeat)
+    exact.signif <- numeric(n_repeat)
 
     rejection$summary$exact.expected <- numeric(4)
     rejection$summary$exact.observed <- numeric(4)
@@ -229,7 +229,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
     rejection$results$exact.pvalue.null <- rep(0, dim.dataset[1])
   }
 
-  for (i in 1:stats){
+  for (i in 1:n_repeat){
     # choose a random sample from dataset (rows: samples, columns: parameters)
     idx.runs <- sample.int(dim.dataset[1], size = testSize)
     env <- cbind(knn$nn.index[idx.runs,1:(k0-1)], idx.runs)
@@ -311,7 +311,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
 
 
 
-  if (stats>1){
+  if (n_repeat>1){
     #summarize chi2-results
     CI95 <- c(0.025,0.5,0.975)
     rejection$summary$kBET.expected <-  c(mean(kBET.expected) ,quantile(kBET.expected, CI95))
@@ -329,21 +329,21 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       rejection$summary$exact.signif <- c(mean(exact.signif) ,quantile(exact.signif, CI95))
     }
 
-    if (stats<10){
+    if (n_repeat<10){
       cat('Warning: The quantile computation for ')
-      cat(paste0(stats))
+      cat(paste0(n_repeat))
       cat(' subset results is not meaningful.')
     }
 
     if(plot==TRUE & exists(x='exact.observed')){
-      plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)', 'exact', 'exact (random)'), each=stats),
+      plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)', 'exact', 'exact (random)'), each=n_repeat),
                               data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected, exact.observed, exact.expected))
       g <-ggplot(plot.data, aes(class, data)) + geom_boxplot() +
         theme_bw() + labs(x='Test', y='Rejection rate')  + theme(axis.text.x = element_text(angle=45, hjust = 1))
       print(g)
     }
     if(plot==TRUE & !exists(x='exact.observed')){
-      plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)'), each=stats),
+      plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)', 'lrt', 'lrt (random)'), each=n_repeat),
                               data =  c(kBET.observed, kBET.expected, lrt.observed, lrt.expected))
       g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() +
         theme_bw() + labs(x='Test', y='Rejection rate') +
@@ -351,7 +351,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       print(g)
     }
 
-  }else{ #i.e. no stats
+  }else{ #i.e. no n_repeat
     rejection$summary$kBET.expected <- kBET.expected
     rejection$summary$kBET.observed <- kBET.observed
     rejection$summary$kBET.signif <- kBET.signif
@@ -371,7 +371,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   }else{ #kBET only
 
 
-      for (i in 1:stats){
+      for (i in 1:n_repeat){
       # choose a random sample from dataset (rows: samples, columns: parameters)
       idx.runs <- sample.int(dim.dataset[1], size = testSize)
       env <- cbind(knn$nn.index[idx.runs,1:(k0-1)], idx.runs)
@@ -404,7 +404,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       rejection$results$kBET.pvalue.null[idx.runs] <- rowMeans(p.val.test.null)
     }
 
-    if (stats>1){
+    if (n_repeat>1){
       #summarize chi2-results
       CI95 <- c(0.025,0.5,0.975)
       rejection$summary$kBET.expected <-  c(mean(kBET.expected) ,quantile(kBET.expected, CI95))
@@ -412,18 +412,18 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       rejection$summary$kBET.observed <-  c(mean(kBET.observed) ,quantile(kBET.observed, CI95))
       rejection$summary$kBET.signif <- c(mean(kBET.signif) ,quantile(kBET.signif, CI95))
 
-      #return also stats
+      #return also n_repeat
       rejection$stats$kBET.expected <- kBET.expected
       rejection$stats$kBET.observed <- kBET.observed
       rejection$stats$kBET.signif <- kBET.signif
 
-      if (stats<10){
+      if (n_repeat<10){
         cat('Warning: The quantile computation for ')
-        cat(paste0(stats))
+        cat(paste0(n_repeat))
         cat(' subset results is not meaningful.')
       }
       if(plot==TRUE){
-        plot.data <- data.frame(class=rep(c('observed(kBET)', 'expected(random)'), each=stats), data =  c( kBET.observed,kBET.expected))
+        plot.data <- data.frame(class=rep(c('observed(kBET)', 'expected(random)'), each=n_repeat), data =  c( kBET.observed,kBET.expected))
         g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() + theme_bw() + labs(x='Test', y='Rejection rate') +
               scale_y_continuous(limits=c(0,1))
         print(g)
@@ -440,7 +440,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   rejection$params$testSize <- testSize
   rejection$params$do.pca <- do.pca
   rejection$params$heuristic <- heuristic
-  rejection$params$stats <- stats
+  rejection$params$n_repeat <- n_repeat
   rejection$params$alpha <- alpha
   rejection$params$addTest <- addTest
   rejection$params$verbose <- verbose

@@ -5,8 +5,8 @@
 \title{kBET - k-nearest neighbour batch effect test}
 \usage{
 kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
-  heuristic = TRUE, stats = 100, alpha = 0.05, addTest = FALSE,
-  verbose = TRUE, plot = TRUE, adapt = TRUE)
+  dim.pca = 20, heuristic = TRUE, n_repeat = 100, alpha = 0.05,
+  addTest = FALSE, verbose = FALSE, plot = TRUE, adapt = TRUE)
 }
 \arguments{
 \item{df}{dataset (rows: samples, columns: parameters)}
@@ -21,15 +21,17 @@ kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
 
 \item{do.pca}{perform a pca prior to knn search? (defaults to TRUE)}
 
+\item{dim.pca}{if do.pca=TRUE, choose the number of dimensions to consider (defaults to 20)}
+
 \item{heuristic}{compute an optimal neighbourhood size k (defaults to TRUE)}
 
-\item{stats}{to create a statistics on batch estimates, evaluate 'stats' subsets}
+\item{n_repeat}{to create a statistics on batch estimates, evaluate 'n_repeat' subsets}
 
 \item{alpha}{significance level}
 
 \item{addTest}{perform an LRT-approximation to the multinomial test AND a multinomial exact test (if appropriate)}
 
-\item{verbose}{displays stages of current computation (defaults to TRUE)}
+\item{verbose}{displays stages of current computation (defaults to FALSE)}
 
 \item{plot}{if stats > 10, then a boxplot of the resulting rejection rates is created}
 

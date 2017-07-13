@@ -34,12 +34,13 @@ install.packages('kBET.zip', repos = NULL, type = 'source')
 #batch: vector or factor with batch label of each cell 
 batch.estimate <- kBET(data, batch)
 ```
-*kBET* creates (if `plot = TRUE`) a boxplot of the *kBET* rejection rates (for neighbourhoods and randomly chosen subsets of size *k*) and *kBET* returns a list with two parts:
+*kBET* creates (if `plot = TRUE`) a boxplot of the *kBET* rejection rates (for neighbourhoods and randomly chosen subsets of size *k*) and *kBET* returns a list with several parts:
 
 * *summary*: summarizes the test results (with 95% confidence interval)
 * *results*: the p-values of all tested samples 
 * *stats*: the results for each of `stats` runs - they can be used to reproduce the boxplot that is returned by kBET
 * *params*: the parameters used in kBET
+* *outsider*: samples without mutual nearest neighbour, their batch labels and a p-value whether their batch label composition varies from the global batch label frequencies
 
 ### Plot *kBET*'s rejection rate
 
@@ -60,7 +61,7 @@ g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() +
 
 ## Variations:
 
-The standard implementation of *kBET* performs a *k-nearest neighbour search* (if `knn = NULL`) with a pre-defined neighbourhood size *k0*, computes an optimal neighbourhood size (`heuristics = TRUE`) and finally 10% of the samples is randomly chosen to compute the test statistics itself (repeatedly by default to derive a confidence interval, `stats = 100`). For repeated runs of *kBET*, we recommend to run the k-nearest neighbour search separately:
+The standard implementation of *kBET* performs a *k-nearest neighbour search* (if `knn = NULL`) with a pre-defined neighbourhood size *k0*, computes an optimal neighbourhood size (`heuristics = TRUE`) and finally 10% of the samples is randomly chosen to compute the test statistics itself (repeatedly by default to derive a confidence interval, `n_repeat = 100`). For repeated runs of *kBET*, we recommend to run the k-nearest neighbour search separately:
 
 ```R
 require('FNN')

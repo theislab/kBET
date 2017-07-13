@@ -1,7 +1,7 @@
 Package: kBET
 Type: Package
 Title: k-nearest neighbour batch effect test
-Version: 0.1.0
+Version: 0.1.1
 Author: Maren Büttner
 Maintainer: Maren Büttner <maren.buettner@helmholtz-muenchen.de>
 Description: This tool detects batch effects in high-dimensional data based on chi^2-test.

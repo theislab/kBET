@@ -13,7 +13,8 @@
 #' @param n_repeat to create a statistics on batch estimates, evaluate 'n_repeat' subsets
 #' @param alpha significance level
 #' @param adapt In some cases, a number of cells do not contribute to any neighbourhood
-#' and this may cause an imbalance in observed and expected batch label frequencies. Frequencies will be adapted if adapt=TRUE (default).
+#' and this may cause an imbalance in observed and expected batch label frequencies.
+#' Frequencies will be adapted if adapt=TRUE (default).
 #' @param addTest perform an LRT-approximation to the multinomial test AND a multinomial exact test (if appropriate)
 #' @param plot if stats > 10, then a boxplot of the resulting rejection rates is created
 #' @param verbose displays stages of current computation (defaults to FALSE)
@@ -21,13 +22,20 @@
 #'    \enumerate{
 #'    \item \code{summary} - a rejection rate for the data, an expected rejection rate for random
 #'         labeling and the significance for the observed result
+#'    \item \code{results} - detailed list for each tested cells; p-values for expected and observed label distribution
+#'    \item \code{average.pval} - significance level over the averaged batch label distribution in all neighbourhoods
 #'    \item \code{stats} - extended test summary for every sample
+#'    \item \code{params} - list of input parameters and adapted parameters, respectively
+#'    \item \code{outsider} - only shwon if \code{adapt=TRUE}. List of samples without mutual nearest neighbour: \itemize{
+#'     \item \code{index} - index of each outsider sample)
+#'     \item \code{categories} - tabularised labels of outsiders
+#'     \item \code{p.val} - Significance level of outsider batch label distribution vs expected frequencies.
+#'     If the significance level is lower than \code{alpha}, expected frequencies will be adapted}
 #'    }
 #' @examples
-#'      \dontshow{
-#'      batch <- rep(1:10,each=20)
-#'      data <- matrix(rpois(n = 50000, lambda = 10)*rbinom(50000,1,prob=0.5), ncol=200)
-#'      }
+#'     batch <- rep(1:10,each=20)
+#'     data <- matrix(rpois(n = 50000, lambda = 10)*rbinom(50000,1,prob=0.5), ncol=200)
+#'
 #'     batch.estimate <- kBET(data,batch)
 
 #' @importFrom FNN get.knn
@@ -441,6 +449,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   rejection$params$k0 <- k0
   rejection$params$testSize <- testSize
   rejection$params$do.pca <- do.pca
+  rejection$params$dim.pca <- dim.pca
   rejection$params$heuristic <- heuristic
   rejection$params$n_repeat <- n_repeat
   rejection$params$alpha <- alpha

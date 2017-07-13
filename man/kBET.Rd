@@ -5,7 +5,7 @@
 \title{kBET - k-nearest neighbour batch effect test}
 \usage{
 kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
-  dim.pca = 20, heuristic = TRUE, n_repeat = 100, alpha = 0.05,
+  dim.pca = 50, heuristic = TRUE, n_repeat = 100, alpha = 0.05,
   addTest = FALSE, verbose = FALSE, plot = TRUE, adapt = TRUE)
 }
 \arguments{
@@ -21,7 +21,7 @@ kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
 
 \item{do.pca}{perform a pca prior to knn search? (defaults to TRUE)}
 
-\item{dim.pca}{if do.pca=TRUE, choose the number of dimensions to consider (defaults to 20)}
+\item{dim.pca}{if do.pca=TRUE, choose the number of dimensions to consider (defaults to 50)}
 
 \item{heuristic}{compute an optimal neighbourhood size k (defaults to TRUE)}
 

@@ -38,7 +38,7 @@ batch.estimate <- kBET(data, batch)
 
 * *summary*: summarizes the test results (with 95% confidence interval)
 * *results*: the p-values of all tested samples 
-* *stats*: the results for each of `stats` runs - they can be used to reproduce the boxplot that is returned by kBET
+* *stats*: the results for each of `n_repeat` runs - they can be used to reproduce the boxplot that is returned by kBET
 * *params*: the parameters used in kBET
 * *outsider*: samples without mutual nearest neighbour, their batch labels and a p-value whether their batch label composition varies from the global batch label frequencies
 

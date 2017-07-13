@@ -8,7 +8,7 @@
 #' @param knn a set of nearest neighbours for each cell (optional)
 #' @param testSize number of data points to test, (10 percent sample size default, but at least 25)
 #' @param do.pca perform a pca prior to knn search? (defaults to TRUE)
-#' @param dim.pca if do.pca=TRUE, choose the number of dimensions to consider (defaults to 20)
+#' @param dim.pca if do.pca=TRUE, choose the number of dimensions to consider (defaults to 50)
 #' @param heuristic compute an optimal neighbourhood size k (defaults to TRUE)
 #' @param n_repeat to create a statistics on batch estimates, evaluate 'n_repeat' subsets
 #' @param alpha significance level
@@ -40,8 +40,8 @@
 #' @name kBET
 #' @export
 kBET <- function(df, batch, k0=NULL,knn=NULL,
-                 testSize=NULL,do.pca=TRUE, dim.pca = 20,
-                 heuristic=TRUE,n_repeat=100, 
+                 testSize=NULL,do.pca=TRUE, dim.pca = 50,
+                 heuristic=TRUE,n_repeat=100,
                  alpha=0.05, addTest = FALSE,
                  verbose=FALSE, plot = TRUE, adapt=TRUE){
 

@@ -1,0 +1,467 @@
+---
+title: "The kBET user's guide"
+author: "Maren Büttner"
+date: "7/20/2017"
+output: 
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: vignette
+bibliography: reference.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Batch effects have an underestimated impact on single-cell RNAseq analysis. The kBET tool is a simple implementation to quantify batch effects in high-dimensional data, specifically single-cell RNAseq data. A manuscript is currently in preparation. For more details on the kBET package, see <https://github.com/theislab/kBET>.
+
+We have designed kBET to test for unspecific differences between multiple batches of data. A batch can be any categorical covariate of a dataset. In practice, batches are independent repeats of an experiment. For example, cells of a patient sample that have been collected and sequenced on two different days describe two batches of the same experiment. The batch-to-batch variation may influence the samples substantially. kBET indicates whether a batch effect is present or not.
+
+# Standard workflow
+## Prepare dataset 
+
+Let us start with a pre-processed count data matrix including only samples (cells) that have passed the quality control. As an example, we use the dataset of [Tung et al. ][tung2017][-@tung2017] that was created on the Illumina C1 platform including ERCC spike-in genes. On April 11^th^ 2017, we have downloaded data and annotation from the [github page][blischak2017] provided by the authors.
+
+[tung2017]: <http://www.nature.com/articles/srep39921>
+[blischak2017]: <https://github.com/jdblischak/singleCellSeq>
+[ritchie2015]: <https://academic.oup.com/nar/article/43/7/e47/2414268/limma-powers-differential-expression-analyses-for>
+
+```{r read_tung}
+umi <- read.table("../data/molecules.txt")
+anno <- read.table("../data/annotation.txt", sep = "\t", header = TRUE)
+```
+
+Input list of quality single cells.
+
+```{r input-quality-single-cells}
+quality_single_cells <- scan("../data/quality-single-cells.txt", what = "character")
+```
+
+Filter out cells with insufficient quality.
+
+```{r filter-cells}
+umi.qc <- umi[, colnames(umi) %in% quality_single_cells]
+anno.qc <- anno[anno$sample_id %in% quality_single_cells, ]
+```
+
+In the original dataset, [Tung et al. ][tung2017][-@tung2017] created three replicates of three patients, but the second replicate of patient *NA19098* did not meet the quality criteria and was excluded from subsequent analysis. The following command summarises the number of cells per patient and per replicate.
+
+```{r table-exp, include=FALSE}
+table(anno.qc$individual, anno.qc$replicate)
+```
+
+```{r replicates, echo=FALSE}
+exp.design <- as.matrix(table(anno.qc$individual, anno.qc$replicate))
+knitr::kable(exp.design, booktabs=TRUE, caption='Experimental design', row.names =TRUE)
+```
+
+Remove genes with zero read counts in the single cells.
+
+```{r remove-non-expressed-genes}
+umi.qc <- umi.qc[rowSums(umi.qc) > 0, ]
+dim(umi.qc)
+```
+
+Finally, we create a vector with the IDs of *ERCC spike-in* genes. We keep them in the dataset, but it is prudent to remove them before using kBET or some normalisation approaches.
+
+```{r get-spike-ins}
+spikes <- grep('ERCC', rownames(umi.qc))
+```
+
+## Run kBET
+
+Now we have finished the basic preprocessing of the dataset, we evaluate with kBET how well the replicates per patient mix without further normalisation. kBET picks neighbourhoods of $k_0$ cells and evaluates the composition of labels in such a neighbourhood to the composition of labels in the complete dataset. Intuitively, a dataset is considered as *well-mixed* (i.e. without batch effect) if we find the both local and global composition of batch labels to be the same. After testing `testSize` many neighbourhoods, kBET returns a score called *rejection rate*, i.e. the fraction of neighbourhoods with a different biased label composition.  
+
+```{r kBET}
+library(kBET)
+patients <- unique(anno.qc$individual)
+kBET.umi.counts <- list()
+for (patient in patients){
+  kBET.umi.counts[[patient]] <- kBET(df = umi.qc[-spikes,anno.qc$individual==patient], 
+                                     batch = anno.qc$replicate[anno.qc$individual==patient],
+                                     plot = FALSE)
+}
+```
+
+kBET returns a test summary and the following result plots for each patient sample:  
+
+```{r kBET_noN_summary, echo=FALSE}
+library(ggplot2)
+library(gridExtra)
+
+kBET.plots <- list()
+for (patient in patients){
+  plot.data <- data.frame(class = rep(c('observed', 'expected'), each=100), 
+                          data = c(kBET.umi.counts[[patient]]$stats$kBET.observed,
+                                   kBET.umi.counts[[patient]]$stats$kBET.expected))
+  kBET.plots[[patient]] <- ggplot(plot.data, aes(class, data)) + 
+                              geom_boxplot() + 
+                              theme_bw() + 
+                              labs(x='Test', y='Rejection rate',title=patient) + 
+                              scale_y_continuous(limits=c(0,1))
+}
+
+n <- length(kBET.plots)
+do.call("grid.arrange", c(kBET.plots, ncol=n))
+```
+
+The algorithm runs a null model where the batch label is permuted at random. Using the null model, we estimate the **expected rejection rate** for a well mixed dataset. The **observed rejection rate** uses the actual batch labels of the samples and describes the bias caused by the batch effect. By default, kBET tests only a subset of samples for *well-mixedness* and repeats the process `n_repeat` times to create the shown statistics. We use the statistics to compute the significance of the rejection rates and add it in the kBET summary. Here, we display the summary for one patient:  
+
+```{r return-significance,echo=FALSE}
+summary.kBET <- kBET.umi.counts[[patients[1]]]$summary
+summary.kBET$kBET.expected <- signif(summary.kBET$kBET.expected, digits = 2)
+summary.kBET$kBET.observed <- signif(summary.kBET$kBET.observed, digits = 2)
+colnames(summary.kBET) <- c('kBET (null model)', 'kBET (observed)', 'kBET p_value')
+knitr::kable(summary.kBET, 
+      booktabs=TRUE, caption=paste0('Summary for ', patient[[1]]), row.names=TRUE)
+```
+
+Let us visualise the technical effects on the data with principal component analysis (PCA). 
+
+```{r visualise-umi-reads, echo=FALSE}
+library(ggplot2)
+pca.umis <- prcomp(log10(1+t(umi.qc[-spikes,])))
+pca.df <- data.frame(PC1=pca.umis$x[,1], 
+                     PC2=pca.umis$x[,2], 
+                     replicate= anno.qc$replicate, 
+                     patient=anno.qc$individual)
+ggplot(pca.df, aes(x=PC1, y=PC2, shape=replicate, colour=patient)) + geom_point() + theme_bw() +
+  ggtitle(expression(PCA * ' '* of* ' '* log[10]-normalised * ' '*raw* ' '* counts.))
+```
+
+We can see that the kBET result is also reflected in the PCA plot. For patient `NA19239`, one replicate is more distant whereas the other two apparently overlap. For the other two patients, it is difficult to determine visually, if the replicates are shifted, especially with more than two batches involved. In contrast, kBET states a significant batch effect and motivates a batch effect correction. In the following section, we estimate the number of genes whose variance is artificially inflated to a 'meaningful' level by the batch effect.
+
+## Manifestation of the batch effect
+
+The downstream analysis of single-cell RNAseq data is usually tailored to answer a specific question. For example, differential gene expression analysis on data from developmental stages is performed differently than the analysis of a blood tissue sample. Nevertheless, we propose that the variability of gene expression should be approximately the same across all replicates. The variability in single-cell gene expression is inflated by technical noise. Technical noise is considered in the *Brennecke* model, which we apply to identify highly variable genes whose variance is well above the technical noise level. The *Brennecke* model describes the relation of the *squared coefficient of variation (CV^2^)* to *mean expression ($\mu_0$)* with a Gamma-type model. This model allows for overdispersion and converges to the offset $\alpha_0$ for high mean expression:
+
+$$CV^2 = \frac{\alpha_1}{\mu_0} + \alpha_0 $$
+
+First, we determine the number of genes being highly variable in each batch. Second, we demonstrate how the number of high variable genes changes if we neglect the batch effect in our samples. The resulting gene sets and their overlaps are illustrated in venn diagrams. 
+
+```{r compute_hvg}
+suppressPackageStartupMessages(library(M3Drop))
+hvg.patient <- list()
+hvg.overlap <- list()
+for (patient in patients){
+  
+  hvg.patient[[patient]] <- list()
+  data.subset <-umi.qc[-spikes,anno.qc$individual==patient]
+  batch.subset <- anno.qc$replicate[anno.qc$individual==patient]
+  batch.subset.ID <- unique(batch.subset)
+  
+  #compute highly variable genes per batch
+  for (replicate in batch.subset.ID){
+    hvg.patient[[patient]][[replicate]] <- 
+      BrenneckeGetVariableGenes(data.subset[, batch.subset==replicate], 
+                                suppress.plot = TRUE)
+  }
+  #compute intersection of highly variable genes in all batches
+  hvg.overlap[[patient]] <- Reduce(intersect, hvg.patient[[patient]])
+  #compute highly variable genes neglecting the batch effect
+  hvg.patient[[patient]][['all']]<- BrenneckeGetVariableGenes(data.subset,
+                                                              suppress.plot = TRUE)
+} 
+```
+
+```{r venn_diag, echo=FALSE}
+suppressPackageStartupMessages(library(grid))
+suppressPackageStartupMessages(library(gridBase))
+suppressPackageStartupMessages(library(gridGraphics))
+suppressPackageStartupMessages(library(VennDiagram))
+for (patient in patients){
+  grid.newpage()
+  vp <- venn.diagram(hvg.patient[[patient]], 
+                      fill = rev(1:length(hvg.patient[[patient]])), 
+                      alpha = 0.3, filename = NULL, main = patient)
+  grid.draw(vp)
+}
+#plot overlap of the replicates
+ # print(patient)
+  #venn::venn(hvg.patient[[patient]], snames = colnames(batch.subset.ID), 
+  #           zcolor = 'style', cexil=1.5)
+
+```
+
+With the venn diagrams, the variability caused by the batch effect becomes obvious. Moreover, we observe that a number of highly variable genes is only present in one batch. We call these genes *irreproducible*. They may indicate the lack of within-batch normalisation since we investigated raw count data where a bias by library size, cell size and cell-specific dropout is present.   
+
+For each set of patient data, we may compute a **false positive rate (FPR)** for the batch effect. We define the FPR by the fraction of highly variable genes that are found in the complete dataset but not in any of the batches. In a formal definition,
+
+* *a*: set of highly variable genes in the complete dataset and
+* $a_i$: set of highly variable genes in batch $i$. 
+
+Then, the false positive rate reads
+
+$$ FPR= 1 - \frac{\left|\bigcup_{i=1}^{n} (a \cap a_i)\right|}{|a|}. $$
+```{r compute_FPR}
+FPR <- list()
+for (patient in patients){
+  batch.subset.ID <- droplevels(unique(anno.qc$replicate[anno.qc$individual==patient]))
+  inters <- sapply(batch.subset.ID, 
+                  function(batch, set, patient){intersect(set[[patient]][['all']], 
+                                                          set[[patient]][[batch]])}, 
+                  hvg.patient, patient)
+  FPR[[patient]] <- 1- length(Reduce(union, inters))/length(hvg.patient[[patient]][['all']])
+}
+```
+For the non-normalised count data, we find false positive rates of $\sim 20\,\%$ for each patient.
+```{r display_FPR, echo=FALSE}
+plot.FPR <- data.frame(patient=names(unlist(FPR)), FPR=round(unlist(FPR),3))
+knitr::kable(plot.FPR, booktabs=TRUE, caption='False positive rates for batch effects in not normalised data', row.names = FALSE)
+```
+
+# Correct library size effects - normalisation with CPM 
+
+Let us employ a simple yet commonly used normalisation method that has been adopted from bulk RNAseq - *counts per million reads (CPM)*. This normalisation computes the relative abundance of each gene and fixes the total number of counts per cell for all samples in the data set. Beware that zeros stay zero in this scenario and that we should add a `pseudocount` if we `log`-transform the data.
+
+```{r normalise-cpm}
+umi.cpm <- apply(umi.qc, 2, function(x,spikes){x/sum(x[-spikes])*1e6}, spikes)
+
+```
+
+## Run kBET
+
+Let us apply kBET on the CPM-normalised data and visualise the results.
+
+```{r kBET-cpm}
+library(kBET)
+patients <- unique(anno.qc$individual)
+kBET.umi.cpm <- list()
+for (patient in patients){
+  kBET.umi.cpm[[patient]] <- kBET(df = umi.cpm[-spikes,anno.qc$individual==patient], 
+                                  batch = anno.qc$replicate[anno.qc$individual==patient],
+                                  plot = FALSE)
+}
+```
+
+
+```{r kBET_CPM_summary, echo=FALSE}
+library(ggplot2)
+library(gridExtra)
+
+kBET.plots <- list()
+for (patient in patients){
+  plot.data <- data.frame(class = rep(c('observed', 'expected'), each=100), 
+                          data = c(kBET.umi.cpm[[patient]]$stats$kBET.observed,
+                                   kBET.umi.cpm[[patient]]$stats$kBET.expected))
+  kBET.plots[[patient]] <- ggplot(plot.data, aes(class, data)) + 
+                              geom_boxplot() + 
+                              theme_bw() + 
+                              labs(x='Test', y='Rejection rate',title=patient) + 
+                              scale_y_continuous(limits=c(0,1))
+}
+
+n <- length(kBET.plots)
+do.call("grid.arrange", c(kBET.plots, ncol=n))
+```
+
+Let us visualise the technical effects on the data with principal component analysis (PCA). 
+
+```{r visualise-umi-cpm, echo=FALSE}
+library(ggplot2)
+pca.umis <- prcomp(log10(1+t(umi.cpm[-spikes,])))
+pca.df <- data.frame(PC1=pca.umis$x[,1], 
+                     PC2=pca.umis$x[,2], 
+                     replicate= anno.qc$replicate, 
+                     patient=anno.qc$individual)
+ggplot(pca.df, aes(x=PC1, y=PC2, shape=replicate, colour=patient)) + geom_point() + theme_bw() +
+  ggtitle(expression(PCA * ' '* of* ' '* log[10]-CPM-normalised * ' '*data.))
+```
+
+Surprisingly, the rejection rate computed by kBET increases for two out of three patients and PCA indicates the separation of the batches. Before we draw conclusions, we will check for highly variable genes again.
+
+## Compute highly variable genes
+
+Below, we have plotted venn diagrams of highly variable genes that are analogous to the venn diagrams above.
+
+```{r compute_hvg_cpm, echo=FALSE}
+library(M3Drop)
+hvg.patient <- list()
+hvg.overlap <- list()
+for (patient in patients){
+  
+  hvg.patient[[patient]] <- list()
+  data.subset <-umi.cpm[-spikes,anno.qc$individual==patient]
+  batch.subset <- anno.qc$replicate[anno.qc$individual==patient]
+  batch.subset.ID <- unique(batch.subset)
+  
+  #compute highly variable genes per batch
+  for (replicate in batch.subset.ID){
+    hvg.patient[[patient]][[replicate]] <- 
+      BrenneckeGetVariableGenes(data.subset[, batch.subset==replicate], 
+                                suppress.plot = TRUE)
+  }
+  #compute intersection of highly variable genes in all batches
+  hvg.overlap[[patient]] <- Reduce(intersect, hvg.patient[[patient]])
+  #compute highly variable genes neglecting the batch effect
+  hvg.patient[[patient]][['all']]<- BrenneckeGetVariableGenes(data.subset,
+                                                              suppress.plot = TRUE)
+}
+```
+
+```{r venn_diag_cpm, echo=FALSE}
+ for (patient in patients){
+  grid.newpage()
+  vp <- venn.diagram(hvg.patient[[patient]], 
+                      fill = rev(1:length(hvg.patient[[patient]])), 
+                      alpha = 0.3, filename = NULL, main = patient)
+  grid.draw(vp)
+
+}
+```
+
+Analogously, we check the false positive rates for the CPM-normalised data. A direct comparison before and after normalisation reveals that FPRs have increased for all patients. 
+```{r compute_FPR2, echo=FALSE}
+FPR <- list()
+for (patient in patients){
+  batch.subset.ID <- droplevels(unique(anno.qc$replicate[anno.qc$individual==patient]))
+  inters <- sapply(batch.subset.ID, 
+                  function(batch, set, patient){intersect(set[[patient]][['all']], set[[patient]][[batch]])}, 
+                  hvg.patient, patient)
+  FPR[[patient]] <- 1- length(Reduce(union, inters))/length(hvg.patient[[patient]][['all']])
+}
+```
+
+```{r display_FPR2, echo=FALSE}
+plot.FPR <- data.frame(patient=names(unlist(FPR)), FPR=round(unlist(FPR),3))
+knitr::kable(plot.FPR, booktabs=TRUE, caption='False positive rates for batch effects in CPM-normalised data', row.names = FALSE)
+```
+
+# Correct batch effects - *limma* package
+
+The *limma* package was originally developped for microarray data and adapted to RNAseq data and implements an empirical Bayes method that borrows information across genes [Ritchie et al. ][ritchie2015][-@ritchie2015]. We check how *limma* performs on our given single-cell RNAseq data.
+
+## Run *limma*
+
+We apply the function `removeBatchEffect` from the *limma* package to correct for the batch effect.
+
+```{r run_limma}
+library(limma) 
+y.limma <- lapply(patients, 
+                   function(idx,data,batch, individual){
+                       limma::removeBatchEffect(data[,individual==idx],
+                                                batch = batch[individual==idx])
+                   }, 
+                   umi.qc[-spikes,], anno.qc$replicate, anno.qc$individual)
+
+```
+
+## Run kBET
+
+Let us check the remaining batch effect with kBET.
+
+```{r run_kBET_limma}
+kBET.limma<- lapply(1:length(patients),
+                    function(idx, data,batch,individual,patients){
+                      print(patients[idx]);
+                      kBET(data[[idx]], batch[individual==patients[idx]], 
+                           plot=FALSE, verbose=TRUE)},
+                    y.limma, anno.qc$replicate, anno.qc$individual,patients)
+```
+
+Let us visualise the kBET rejection rates that we have after batch correction with *limma*. 
+
+```{r kBET_limma_plot, echo=FALSE}
+kBET.plots <- list()
+for (patient in 1:length(patients)){
+  plot.data <- data.frame(class = rep(c('observed', 'expected'), each=100),
+                          data = c(kBET.limma[[patient]]$stats$kBET.observed,
+                                   kBET.limma[[patient]]$stats$kBET.expected))
+  kBET.plots[[patient]] <- ggplot(plot.data, aes(class, data)) +
+    geom_boxplot() +
+    theme_bw() +
+    labs(x='Test', y='Rejection rate',title=patients[patient]) +
+    scale_y_continuous(limits=c(0,1))
+}
+
+n <- length(kBET.plots)
+do.call("grid.arrange", c(kBET.plots, ncol=n))
+
+```
+
+We find that the batch effect per patient was largely reduced with *limma*. Let us check the significance of the rejection rates plotted above. 
+
+```{r display_signif, echo=FALSE}
+p.values <- sapply(1:length(patients), function(x,data){data[[x]]$summary$kBET.signif[1]},kBET.limma)
+plot.signif <- data.frame(patient=patients, p_value=signif(unlist(p.values),3))
+knitr::kable(plot.signif, booktabs=TRUE, caption='Significance of batch effect after applying limma', row.names = FALSE)
+```
+
+## Compute FPR for highly variable genes
+
+Finally, we check how many highly variable genes we find after batch correction. 
+
+```{r compute_hvg_limma, echo=FALSE}
+library(M3Drop)
+hvg.patient <- list()
+hvg.overlap <- list()
+for (patient in patients){
+  
+  hvg.patient[[patient]] <- list()
+  data.subset <-y.limma[[which(patients%in% patient)]]
+  batch.subset <- anno.qc$replicate[anno.qc$individual==patient]
+  batch.subset.ID <- unique(batch.subset)
+  
+  #compute highly variable genes per batch
+  for (replicate in batch.subset.ID){
+    hvg.patient[[patient]][[replicate]] <- 
+      BrenneckeGetVariableGenes(data.subset[, batch.subset==replicate], 
+                                suppress.plot = TRUE)
+  }
+  #compute intersection of highly variable genes in all batches
+  hvg.overlap[[patient]] <- Reduce(intersect, hvg.patient[[patient]])
+  #compute highly variable genes neglecting the batch effect
+  hvg.patient[[patient]][['all']]<- BrenneckeGetVariableGenes(data.subset,
+                                                              suppress.plot = TRUE)
+  
+}
+
+for (patient in patients){
+  grid.newpage()
+  vp <- venn.diagram(hvg.patient[[patient]], 
+                      fill = rev(1:length(hvg.patient[[patient]])), 
+                      alpha = 0.3, filename = NULL, main = patient)
+  grid.draw(vp)
+}
+```
+
+It becommes obvious that the number of *irreproducible* genes (those only found in one batch) increased after batch correction with *limma*. Nevertheless, we find that the reduction of batch effects relates well to the decrease of the false positive rate.
+
+```{r compute_FPR_limma, echo=FALSE}
+FPR <- list()
+for (patient in patients){
+  batch.subset.ID <- droplevels(unique(anno.qc$replicate[anno.qc$individual==patient]))
+  inters <- sapply(batch.subset.ID, 
+                  function(batch, set, patient){intersect(set[[patient]][['all']], set[[patient]][[batch]])}, 
+                  hvg.patient, patient)
+  FPR[[patient]] <- 1- length(Reduce(union, inters))/length(hvg.patient[[patient]][['all']])
+}
+```
+
+```{r display_FPR_limma, echo=FALSE}
+plot.FPR <- data.frame(patient=names(unlist(FPR)), FPR=signif(unlist(FPR),3))
+knitr::kable(plot.FPR, booktabs=TRUE, caption='False positive rates for batch effects in limma-corrected data', row.names = FALSE)
+```
+
+# Summary
+
+In total, we have seen that kBET detects batch effects in single-cell RNAseq data. Batch effects can translate into false discoveries of potientially meaningful genes when the dataset is not corrected for it. In our example, we have demonstrated that a normalisation can have adverse effects on the dataset, whereas models specifically designed for batch effect correction may effectively redauce batch effects. In conclusion, we recommend to repeat a batch effect analysis before and after normalisation and batch effect correction to ensure that the batch effect has no further impact on downstream analysis.  
+
+#References
+<!-- ## Correct batch effects - example 2 -->
+
+
+
+<!-- > * `SpikeInput`: a vector of length $q-q_0$ whose elements contain the input number of molecules for the spike-in genes (amount per cell). -->
+
+<!-- ```{r load-spike-input} -->
+<!-- spike <- read.table("../data/expected-ercc-molecules.txt", header = TRUE, -->
+<!--                     sep = "\t", stringsAsFactors = FALSE) -->
+<!-- ``` -->
+
+
+
+
+

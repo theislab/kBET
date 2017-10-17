@@ -13,7 +13,7 @@
 #' @importFrom stats dist
 #'
 #' @examples
-#'     get_maximum <- bisect(-(x-2)^2, c(-5,50))
+#'     get_maximum <- bisect(function(x){-(x-2)^2}, c(-5,50))
 #'
 #' @export
 bisect <- function(foo, bounds, known=NULL,..., tolx = 5, toly = 0.01){

@@ -1,0 +1,18 @@
+authors      <- eval(parse(text = packageDescription(‘kBET’, fields = 'Authors@R')))
+year         <- 2017L
+title        <- ‘kBET: k-nearest neighbour batch effect test’
+organization <- 'Helmholtz-Zentrum München'
+
+
+bibentry('Article', sprintf(
+		'%s %s et al. (%s): %s. %s. URL: <%s>.',
+		authors[[1]]$given, authors[[1]]$family, year,
+		title, organization, url),
+	title        = title,
+	volume       = 32L,
+	number       = 8L,
+	author       = authors,
+	organization = organization,
+	address      = 'Ingolstädter Landstraße 1, Neuherberg, Germany',
+	year         = year,
+	note         = 'More information at <https://github.com/theislab/kBET’)

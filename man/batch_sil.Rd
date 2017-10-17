@@ -22,8 +22,8 @@ The average silhouette width for all clusters. For batch effect, the smaller the
 Determine batch/bio effect using the silhouette coefficient (adopted from scone):
 }
 \examples{
-   \dontrun{
-    pca.data <- prcomp(data, center=TRUE)
-    batch.silhouette <- batch_sil(pca.data, batch)
-    }
+    testdata <- create_testset_multibatch(n.genes=1000, n.batch=3, plattform='any')
+    pca.data <- prcomp(testdata$data, center=TRUE)
+    batch.silhouette <- batch_sil(pca.data, testdata$batch)
+
 }

@@ -9,8 +9,12 @@
 #' @param ... additional parameters for \code{foo}
 #' @param tolx break condition for argument (defaults to 10)
 #' @param toly break condition for value (defaults to 0.01)
-#'
+#' @return A range of bounds where \code{foo} is maximal.
 #' @importFrom stats dist
+#'
+#' @examples
+#'     get_maximum <- bisect(-(x-2)^2, c(-5,50))
+#'
 #' @export
 bisect <- function(foo, bounds, known=NULL,..., tolx = 5, toly = 0.01){
   if(is.null(known)){

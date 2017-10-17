@@ -7,7 +7,9 @@
 pcRegression(pca.data, batch, tol = 1e-16)
 }
 \arguments{
-\item{pca.data}{a list as created by 'prcomp', pcRegression needs $x: the principal components (PCs, correctly: the rotated data) and $sdev: the standard deviations of the PCs)}
+\item{pca.data}{a list as created by 'prcomp', pcRegression needs $x:
+the principal components (PCs, correctly: the rotated data) and
+$sdev: the standard deviations of the PCs)}
 
 \item{batch}{vector with the batch covariate (for each cell)}
 
@@ -16,13 +18,21 @@ pcRegression(pca.data, batch, tol = 1e-16)
 \value{
 List summarising principal component regression
 \itemize{
- \item \code{maxVar} - the variance explained by principal component(s) that correlate(s) most with the batch effect
- \item \code{PmaxVar} - p-value (returned by linear model) for the respective principal components (related to \code{maxVar})
-\item \code{R2Var} - sum over Var(PC_i)*r2(PC_i and batch) for all i
+ \item \code{maxVar} - the variance explained by principal component(s)
+ that correlate(s) most with the batch effect
+ \item \code{PmaxVar} - p-value (returned by linear model) for the
+ respective principal components (related to \code{maxVar})
+ \item \code{R2Var} - sum over Var(PC_i)*r2(PC_i and batch) for all i
 \item \code{ExplainedVar} - explained variance for each PC
 \item \code{r2} - detailed results of correlation (R-Square) analysis
 }
 }
 \description{
-pcRegression does a linear model fit of principal components and a batch (categorical) variable
+pcRegression does a linear model fit of principal components
+and a batch (categorical) variable
+}
+\examples{
+    testdata <- create_testset_multibatch(n.genes=1000, n.batch=3, plattform='any')
+    pca.data <- prcomp(testdata$data, center=TRUE)
+    pc.reg.result <- pcRegression(pca.data, testdata$batch)
 }

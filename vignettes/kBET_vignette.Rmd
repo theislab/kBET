@@ -1,3 +1,4 @@
+%\VignetteEncoding{UTF-8}
 ---
 title: "The kBET user's guide"
 author: "Maren Büttner"
@@ -450,17 +451,6 @@ knitr::kable(plot.FPR, booktabs=TRUE, caption='False positive rates for batch ef
 In total, we have seen that kBET detects batch effects in single-cell RNAseq data. Batch effects can translate into false discoveries of potientially meaningful genes when the dataset is not corrected for it. In our example, we have demonstrated that a normalisation can have adverse effects on the dataset, whereas models specifically designed for batch effect correction may effectively redauce batch effects. In conclusion, we recommend to repeat a batch effect analysis before and after normalisation and batch effect correction to ensure that the batch effect has no further impact on downstream analysis.  
 
 #References
-<!-- ## Correct batch effects - example 2 -->
-
-
-
-<!-- > * `SpikeInput`: a vector of length $q-q_0$ whose elements contain the input number of molecules for the spike-in genes (amount per cell). -->
-
-<!-- ```{r load-spike-input} -->
-<!-- spike <- read.table("../data/expected-ercc-molecules.txt", header = TRUE, -->
-<!--                     sep = "\t", stringsAsFactors = FALSE) -->
-<!-- ``` -->
-
 
 
 

@@ -10,10 +10,10 @@
 #'    The average silhouette width for all clusters. For batch effect, the smaller the better.
 #'    For biological effect, the larger the better.
 #' @examples
-#'    \dontrun{
-#'     pca.data <- prcomp(data, center=TRUE)
-#'     batch.silhouette <- batch_sil(pca.data, batch)
-#'     }
+#'     testdata <- create_testset_multibatch(n.genes=1000, n.batch=3, plattform='any')
+#'     pca.data <- prcomp(testdata$data, center=TRUE)
+#'     batch.silhouette <- batch_sil(pca.data, testdata$batch)
+#'
 #' @importFrom cluster silhouette
 #' @importFrom stats dist
 #' @export

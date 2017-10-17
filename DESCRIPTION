@@ -1,22 +1,31 @@
 Package: kBET
 Type: Package
 Title: k-nearest neighbour batch effect test
-Version: 0.1.1
-Author: Maren Büttner
+Version: 0.1.2
+Authors@R: c(
+	person('Maren', 'Büttner', NULL, 'maren.buettner@helmholtz-muenchen.de', c('cre', 'aut')),
+	person('Alex', 'Wolf', NULL, 'alex.wolf@helmholtz-muenchen.de', 'ctb'),
+	person('Fabian', 'Theis', NULL, 'fabian.theis@helmholtz-muenchen.de', 'ctb')
+	)
 Maintainer: Maren Büttner <maren.buettner@helmholtz-muenchen.de>
 Description: This tool detects batch effects in high-dimensional data based on chi^2-test.
-Imports: FNN, RColorBrewer, ggplot2, cluster, stats    
+Imports: FNN, RColorBrewer, ggplot2, cluster, stats, grDevices, utils, MASS
 License: GPL 
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
+biocViews: CellBiology, CellBasedAssays, BatchEffect, Software
 Collate: 
     'ExactMultinomialTest.R'
     'addalpha.R'
     'batch_sil.R'
     'bisect.R'
+    'create_testset_multibatch.R'
     'findVectors.R'
     'kBET-utils.R'
     'kBET.R'
     'multinomial.test.R'
     'pcRegression.R'
+Author: Maren Büttner [cre, aut],
+  	Alex Wolf [ctb], 
+	Fabian Theis [ctb]

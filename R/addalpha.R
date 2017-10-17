@@ -16,7 +16,7 @@
 #' @importFrom grDevices col2rgb rgb
 #' @export
 addalpha <- function(colors, alpha=1.0) {
-  r <- col2rgb(colors, alpha=T)
+  r <- col2rgb(colors, alpha=TRUE)
   # Apply alpha
   r[4,] <- alpha*255
   r <- r/255.0

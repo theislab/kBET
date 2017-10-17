@@ -1,17 +1,26 @@
 #' pcRegression
 #'
-#' @description pcRegression does a linear model fit of principal components and a batch (categorical) variable
-#' @param pca.data a list as created by 'prcomp', pcRegression needs $x: the principal components (PCs, correctly: the rotated data) and $sdev: the standard deviations of the PCs)
+#' @description pcRegression does a linear model fit of principal components
+#' and a batch (categorical) variable
+#' @param pca.data a list as created by 'prcomp', pcRegression needs $x:
+#' the principal components (PCs, correctly: the rotated data) and
+#' $sdev: the standard deviations of the PCs)
 #' @param batch vector with the batch covariate (for each cell)
 #' @param tol truncation threshold for significance level, default: 1e-16
 #' @return List summarising principal component regression
 #' \itemize{
-#'  \item \code{maxVar} - the variance explained by principal component(s) that correlate(s) most with the batch effect
-#'  \item \code{PmaxVar} - p-value (returned by linear model) for the respective principal components (related to \code{maxVar})
-#' \item \code{R2Var} - sum over Var(PC_i)*r2(PC_i and batch) for all i
+#'  \item \code{maxVar} - the variance explained by principal component(s)
+#'  that correlate(s) most with the batch effect
+#'  \item \code{PmaxVar} - p-value (returned by linear model) for the
+#'  respective principal components (related to \code{maxVar})
+#'  \item \code{R2Var} - sum over Var(PC_i)*r2(PC_i and batch) for all i
 #' \item \code{ExplainedVar} - explained variance for each PC
 #' \item \code{r2} - detailed results of correlation (R-Square) analysis
 #' }
+#' @examples
+#'     testdata <- create_testset_multibatch(n.genes=1000, n.batch=3, plattform='any')
+#'     pca.data <- prcomp(testdata$data, center=TRUE)
+#'     pc.reg.result <- pcRegression(pca.data, testdata$batch)
 #' @importFrom stats t.test lm
 #' @export
 pcRegression <- function(pca.data, batch, tol=1e-16){

@@ -107,7 +107,8 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       #default environment size: quarter the size of the largest batch
       k0=floor(mean(class.frequency$freq)*dim.dataset[1]/4)
       if(k0<10){
-        stop("Your dataset has too few samples to run a heuristic.\nPlease fix k0 and set heuristic=FALSE.")
+        stop("Your dataset has too few samples to run a heuristic.\n
+             Please fix k0 and set heuristic=FALSE.")
       }
     }else{
       #default environment size: size of the largest batch
@@ -168,7 +169,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       new.class.frequency <- data.frame(class = names(new.frequencies),
                                     freq = as.numeric(new.frequencies))
       if(verbose){
-        cat(paste0('There are ', length(outsider), ' cells (',round(length(outsider)/length(batch)*100,3),'%) that do not appear in any neighbourhood.\n',
+        cat(paste0('There are ', length(outsider), ' cells (',
+                   round(length(outsider)/length(batch)*100,3),
+                   '%) that do not appear in any neighbourhood.\n',
                    'The expected frequencies for each category have been adapted.\n',
                    'Cell indexes are saved to result list.\n'))
       }

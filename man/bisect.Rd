@@ -19,8 +19,15 @@ bisect(foo, bounds, known = NULL, ..., tolx = 5, toly = 0.01)
 
 \item{toly}{break condition for value (defaults to 0.01)}
 }
+\value{
+A range of bounds where \code{foo} is maximal.
+}
 \description{
 provides recursive bisection algorithm for an arbitrary function
    It evaluates the function \code{foo} at the bounds and
    replaces one of the boundaries until a maximum is found or the interval becomes too small
+}
+\examples{
+    get_maximum <- bisect(-(x-2)^2, c(-5,50))
+
 }

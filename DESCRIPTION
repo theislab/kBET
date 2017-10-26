@@ -20,7 +20,7 @@ Collate:
     'addalpha.R'
     'batch_sil.R'
     'bisect.R'
-    'create_testset_multibatch.R’
+    'create_testset_multibatch.R'
     'findVectors.R'
     'kBET-utils.R'
     'kBET.R'

@@ -21,6 +21,7 @@ Collate:
     'batch_sil.R'
     'bisect.R'
     'create_testset_multibatch.R'
+    'data.R'
     'findVectors.R'
     'kBET-utils.R'
     'kBET.R'

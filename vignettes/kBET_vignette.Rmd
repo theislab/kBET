@@ -1,4 +1,3 @@
-%\VignetteEncoding{UTF-8}
 ---
 title: "The kBET user's guide"
 author: "Maren Büttner"
@@ -23,21 +22,24 @@ We have designed kBET to test for unspecific differences between multiple batche
 # Standard workflow
 ## Prepare dataset 
 
-Let us start with a pre-processed count data matrix including only samples (cells) that have passed the quality control. As an example, we use the dataset of [Tung et al. ][tung2017][-@tung2017] that was created on the Illumina C1 platform including ERCC spike-in genes. On April 11^th^ 2017, we have downloaded data and annotation from the [github page][blischak2017] provided by the authors.
+Let us start with a pre-processed count data matrix including only samples (cells) that have passed the quality control. As an example, we use the dataset of [Tung et al. ][tung2017][-@tung2017] that was created on the Illumina C1 platform including ERCC spike-in genes. We will use the processed data and annotation from the [github page][blischak2017] provided by the authors.
 
 [tung2017]: <http://www.nature.com/articles/srep39921>
 [blischak2017]: <https://github.com/jdblischak/singleCellSeq>
 [ritchie2015]: <https://academic.oup.com/nar/article/43/7/e47/2414268/limma-powers-differential-expression-analyses-for>
 
-```{r read_tung}
-umi <- read.table("../data/molecules.txt")
-anno <- read.table("../data/annotation.txt", sep = "\t", header = TRUE)
+```{r read_tung, message=FALSE}
+library(RCurl)
+data_path <- "https://raw.githubusercontent.com/jdblischak/singleCellSeq/master/data/"
+umi <- read.table(text=getURL(paste0(data_path, "molecules.txt")))
+anno <- read.table(text=getURL(paste0(data_path,"annotation.txt")), sep = "\t", header = TRUE)
 ```
 
 Input list of quality single cells.
 
 ```{r input-quality-single-cells}
-quality_single_cells <- scan("../data/quality-single-cells.txt", what = "character")
+quality_single_cells <- scan(text=getURL(paste0(data_path,"quality-single-cells.txt")), 
+                             what = "character")
 ```
 
 Filter out cells with insufficient quality.

@@ -1,3 +1,4 @@
+%\VignetteEncoding{UTF-8}
 ---
 title: "The kBET user's guide"
 author: "Maren Büttner"

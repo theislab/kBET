@@ -10,8 +10,10 @@ Authors@R: c(
 Maintainer: Maren Büttner <maren.buettner@helmholtz-muenchen.de>
 Description: This tool detects batch effects in high-dimensional data based on chi^2-test.
 Imports: FNN, RColorBrewer, ggplot2, cluster, stats, grDevices, utils, MASS
+Suggests: knitr
 License: GPL 
 Encoding: UTF-8
+VignetteBuilder: knitr
 LazyData: true
 RoxygenNote: 6.0.1
 biocViews: CellBiology, CellBasedAssays, BatchEffect, Software

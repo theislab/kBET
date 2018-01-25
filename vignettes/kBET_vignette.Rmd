@@ -1,4 +1,3 @@
-%\VignetteEncoding{UTF-8}
 ---
 title: "The kBET user's guide"
 author: "Maren Büttner"
@@ -7,6 +6,10 @@ output:
   prettydoc::html_pretty:
     theme: cayman
     highlight: vignette
+vignette: >
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{"The kBET user's guide"}
 bibliography: reference.bib
 ---
 

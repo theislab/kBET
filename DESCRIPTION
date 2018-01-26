@@ -10,7 +10,7 @@ Authors@R: c(
 Maintainer: Maren Büttner <maren.buettner@helmholtz-muenchen.de>
 Description: This tool detects batch effects in high-dimensional data based on chi^2-test.
 Imports: FNN, RColorBrewer, ggplot2, cluster, stats, grDevices, utils, MASS
-Suggests: knitr, M3Drop
+Suggests: knitr, M3Drop, RCurl, grid, gridBase, gridGraphics, gridExtra, VennDiagram, limma
 License: GPL 
 Encoding: UTF-8
 VignetteBuilder: knitr

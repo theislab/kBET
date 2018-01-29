@@ -26,13 +26,15 @@
 #' @export
 batch_sil <- function(pca.data, batch, nPCs=3){
     # in scone, they use svd to compute principal components.
-    # For now, we'll keep the PCA object created in prcomp to be consistent
-    # proj <- svd(scale(t(expr),center = TRUE,scale = TRUE), nu = 3, nv =0)$u
+    # For now, we'll keep the PCA object created in
+    # prcomp to be consistent
+    # proj <- svd(scale(t(expr),center = TRUE,scale = TRUE),
+    #             nu = 3, nv =0)$u
 
-  dd <- as.matrix(dist(pca.data$x[,seq_len(nPCs)]))
-  score_sil <- summary(silhouette(as.numeric(batch), dd))$avg.width
+    dd <- as.matrix(dist(pca.data$x[,seq_len(nPCs)]))
+    score_sil <- summary(silhouette(as.numeric(batch), dd))$avg.width
 
-  return(score_sil)
+    return(score_sil)
 }
 
 

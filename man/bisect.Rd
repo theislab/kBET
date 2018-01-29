@@ -9,9 +9,11 @@ bisect(foo, bounds, known = NULL, ..., tolx = 5, toly = 0.01)
 \arguments{
 \item{foo}{a function mapping a one-dim argument to one-dim value}
 
-\item{bounds}{a vector of length 2 with real valued numbers (i.e. two arguments of \code{foo})}
+\item{bounds}{a vector of length 2 with real valued numbers
+(i.e. two arguments of \code{foo})}
 
-\item{known}{tells for which of the arguments a value is known (defaults to NULL)}
+\item{known}{tells for which of the arguments a value is known
+(defaults to NULL)}
 
 \item{...}{additional parameters for \code{foo}}
 
@@ -23,9 +25,11 @@ bisect(foo, bounds, known = NULL, ..., tolx = 5, toly = 0.01)
 A range of bounds where \code{foo} is maximal.
 }
 \description{
-provides recursive bisection algorithm for an arbitrary function
+provides recursive bisection algorithm for
+   an arbitrary function
    It evaluates the function \code{foo} at the bounds and
-   replaces one of the boundaries until a maximum is found or the interval becomes too small
+   replaces one of the boundaries until a maximum is found
+   or the interval becomes too small
 }
 \examples{
     get_maximum <- bisect(function(x){-(x-2)^2}, c(-5,50))

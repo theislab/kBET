@@ -1,5 +1,6 @@
 #' addalpha - add transparency info to colorset for plotting
-#' @description \code{addalpha} adds transparency information to a vector in R color format
+#' @description \code{addalpha} adds transparency
+#'     information to a vector in R color format
 #' @param colors a hexadecimal string as commonly used in R
 #'
 #' @param alpha

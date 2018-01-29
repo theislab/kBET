@@ -1,7 +1,7 @@
 Package: kBET
 Type: Package
 Title: k-nearest neighbour batch effect test
-Version: 0.99.2
+Version: 0.99.333333333333333333333333333333333
 Authors@R: c(
 	person('Maren', 'Büttner', NULL, 'maren.buettner@helmholtz-muenchen.de', c('cre', 'aut')),
 	person('Alex', 'Wolf', NULL, 'alex.wolf@helmholtz-muenchen.de', 'ctb'),

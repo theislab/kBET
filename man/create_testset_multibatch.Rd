@@ -12,13 +12,15 @@ create_testset_multibatch(n.genes = 1000, n.batch = 3, plattform = c("C1",
 
 \item{n.batch}{number of batches in the data set}
 
-\item{plattform}{maximum number of cells (samples) per batch. There are three modes:
+\item{plattform}{maximum number of cells (samples) per batch.
+There are three modes:
 \enumerate{
   \item \code{C1} - 96 cells (max)
   \item \code{dropseq} - 1000 cells (max)
   \item \code{any} - 300 cells (max)
   }
-The number of cell per batch is varied by a Beta distributed random variable to simulate a quality control, where
+The number of cell per batch is varied by a Beta distributed random
+variable to simulate a quality control, where
 80\% of the samples pass.}
 }
 \value{
@@ -31,8 +33,10 @@ list object
 }
 \description{
 \code{create_testset_multibatch} simulates single-cell RNA-seq data
-as zero-inflated negative binomial counts. The observe several batches that differ from each other - the difference is
-randomly chosen from the Beta distribution with a = 1, b = 9, i.e. the expected fraction of varied genes is 1/10.
+as zero-inflated negative binomial counts.
+The observe several batches that differ from each other - the difference is
+randomly chosen from the Beta distribution with a = 1, b = 9,
+i.e. the expected fraction of varied genes is 1/10.
 }
 \examples{
     testdata <- create_testset_multibatch(n.genes=1000, n.batch=3, plattform='any')

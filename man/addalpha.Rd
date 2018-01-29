@@ -17,7 +17,8 @@ addalpha(colors, alpha = 1)
 a hexadecimal string of length \code{colors}
 }
 \description{
-\code{addalpha} adds transparency information to a vector in R color format
+\code{addalpha} adds transparency
+    information to a vector in R color format
 }
 \examples{
     library(RColorBrewer)

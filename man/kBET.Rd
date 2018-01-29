@@ -59,7 +59,7 @@ list object
 \code{kBET} runs a chi square test to evaluate the probability of a batch effect.
 }
 \examples{
-    batch <- rep(1:10,each=20)
+    batch <- rep(seq_len(10),each=20)
     data <- matrix(rpois(n = 50000, lambda = 10)*rbinom(50000,1,prob=0.5), ncol=200)
 
     batch.estimate <- kBET(data,batch)

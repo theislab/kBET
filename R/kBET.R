@@ -33,7 +33,7 @@
 #'     If the significance level is lower than \code{alpha}, expected frequencies will be adapted}
 #'    }
 #' @examples
-#'     batch <- rep(1:10,each=20)
+#'     batch <- rep(seq_len(10),each=20)
 #'     data <- matrix(rpois(n = 50000, lambda = 10)*rbinom(50000,1,prob=0.5), ncol=200)
 #'
 #'     batch.estimate <- kBET(data,batch)
@@ -160,7 +160,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   #decide to adapt general frequencies
   if(adapt){
    # idx.run <- sample.int(dim.dataset[1], size = min(2*testSize, dim.dataset[1]))
-    outsider <- which(!(1:dim.dataset[1] %in% knn$nn.index[,1:(k0-1)]))
+    outsider <- which(!(seq_len(dim.dataset[1]) %in% knn$nn.index[,seq_len(k0-1)]))
     outsider.batch <- table(batch[outsider])
     p.out <- chi_batch_test(outsider, class.frequency, batch,  dof)
     is.imbalanced <- p.out < alpha
@@ -208,7 +208,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
                                     kBET.pvalue.null = rep(0, dim.dataset[1]))
 
   #get average residual score
-  env <- as.vector(cbind(knn$nn.index[,1:(k0-1)], 1:dim.dataset[1]))
+  env <- as.vector(cbind(knn$nn.index[,seq_len(k0-1)], seq_len(dim.dataset[1])))
   if(adapt && is.imbalanced){
     rejection$average.pval <- 1-pchisq(k0*residual_score_batch(env, new.class.frequency, batch), dof)
   }else{
@@ -245,10 +245,10 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
     rejection$results$exact.pvalue.null <- rep(0, dim.dataset[1])
   }
 
-  for (i in 1:n_repeat){
+  for (i in seq_len(n_repeat)){
     # choose a random sample from dataset (rows: samples, columns: parameters)
     idx.runs <- sample.int(dim.dataset[1], size = testSize)
-    env <- cbind(knn$nn.index[idx.runs,1:(k0-1)], idx.runs)
+    env <- cbind(knn$nn.index[idx.runs,seq_len(k0-1)], idx.runs)
     #env.rand <- t(sapply(rep(dim.dataset[1],testSize),  sample.int, k0))
 
     #perform test
@@ -387,10 +387,10 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   }else{ #kBET only
 
 
-      for (i in 1:n_repeat){
+      for (i in seq_len(n_repeat)){
       # choose a random sample from dataset (rows: samples, columns: parameters)
       idx.runs <- sample.int(dim.dataset[1], size = testSize)
-      env <- cbind(knn$nn.index[idx.runs,1:(k0-1)], idx.runs)
+      env <- cbind(knn$nn.index[idx.runs,seq_len(k0-1)], idx.runs)
 
       #perform test
       if(adapt && is.imbalanced){

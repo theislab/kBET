@@ -7,7 +7,7 @@ findVectors <- function (groups, size)
   }
   else {
     mat <- matrix(rep(0, groups - 1), nrow = 1)
-    for (i in 1:size) {
+    for (i in seq_len(size)) {
       mat <- rbind(mat, findVectors(groups - 1, i))
     }
     mat <- cbind(mat, size - rowSums(mat))

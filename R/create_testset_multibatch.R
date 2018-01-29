@@ -60,8 +60,8 @@ create_testset_multibatch <- function(n.genes=1000, n.batch=3, plattform = c('C1
     res <- 1/(1+exp(-(b0+b1*mu)))}, b0)
 
   #simulate counts in all batches
-  testset <- sapply(1:n.genes,function(k,sample.size, decay.prob, mu){
-    unlist(sapply(1:n.batch, function(x,sample.size, decay.prob, mu){rnegbin(sample.size[x], mu=mu[k,x], 1)*
+  testset <- sapply(seq_len(n.genes),function(k,sample.size, decay.prob, mu){
+    unlist(sapply(seq_len(n.batch), function(x,sample.size, decay.prob, mu){rnegbin(sample.size[x], mu=mu[k,x], 1)*
         rbinom(sample.size[x], 1, decay.prob[k,x])},
         sample.size, decay.prob, mu))}, samples, decay.prob2, mu.batch)
 

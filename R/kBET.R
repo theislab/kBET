@@ -125,16 +125,16 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   stopifnot(class(n_repeat) == 'numeric', n_repeat>0)
 
   if (is.null(k0) || k0>=dim.dataset[1]){
-    if(heuristic){
+    if(!heuristic){
       #default environment size: quarter the size of the largest batch
       k0=floor(mean(class.frequency$freq)*dim.dataset[1]/4)
-      if(k0<10){
-        stop("Your dataset has too few samples to run a heuristic.\n
-             Please fix k0 and set heuristic=FALSE.")
-      }
     }else{
       #default environment size: size of the largest batch
       k0=floor(mean(class.frequency$freq)*dim.dataset[1])
+      if(k0<10){
+        stop("Your dataset has too few samples to run a heuristic.\n
+             Please assign k0 and set heuristic=FALSE.")
+      }
     }
     if(verbose)
     {cat('Initial neighbourhood size is set to ')

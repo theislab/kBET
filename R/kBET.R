@@ -125,7 +125,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   stopifnot(class(n_repeat) == 'numeric', n_repeat>0)
 
   if (is.null(k0) || k0>=dim.dataset[1]){
-    if(!heuristic){
+    if(heuristic){
       #default environment size: quarter the size of the largest batch
       k0=floor(mean(class.frequency$freq)*dim.dataset[1]/4)
       if(k0<10){

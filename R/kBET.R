@@ -3,7 +3,7 @@
 #' @description \code{kBET} runs a chi square test to evaluate
 #' the probability of a batch effect.
 #'
-#' @param df dataset (rows: samples, columns: parameters)
+#' @param df dataset (rows: samples, columns: features)
 #' @param batch batch id for each cell or a data frame with
 #' both condition and replicates
 #' @param k0 number of nearest neighbours to test on (neighbourhood size)
@@ -40,6 +40,8 @@
 #'    \item \code{stats} - extended test summary for every sample
 #'    \item \code{params} - list of input parameters and adapted parameters,
 #'    respectively
+#'    \item \code{badBatch} - the batches whose frequencies deviate most
+#'    from expected frequencies
 #'    \item \code{outsider} - only shown if \code{adapt=TRUE}. List of samples
 #'         without mutual nearest neighbour: \itemize{
 #'     \item \code{index} - index of each outsider sample)
@@ -129,8 +131,8 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       #default environment size: quarter the size of the largest batch
       k0=floor(mean(class.frequency$freq)*dim.dataset[1]/4)
     }else{
-      #default environment size: size of the largest batch
-      k0=floor(mean(class.frequency$freq)*dim.dataset[1])
+      #default environment size: three quarter the size of the largest batch
+      k0=floor(mean(class.frequency$freq)*dim.dataset[1]*0.75)
       if(k0<10){
         stop("Your dataset has too few samples to run a heuristic.\n
              Please assign k0 and set heuristic=FALSE.")
@@ -219,7 +221,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       if(verbose==TRUE){
         cat(paste0('done.\nHeuristic did not change the
                    neighbourhood.\n If results appear inconclusive,
-                   increase k0=', k0, '.\n'))
+                   change k0=', k0, '.\n'))
       }
     }
   }
@@ -233,7 +235,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   rejection$results   <- data.frame(tested = numeric(dim.dataset[1]),
                                     kBET.pvalue.test = rep(0,dim.dataset[1]),
                                     kBET.pvalue.null = rep(0, dim.dataset[1]))
-
+  rejection$badBatch <- numeric(1)
   #get average residual score
   env <- as.vector(cbind(knn$nn.index[,seq_len(k0-1)], seq_len(dim.dataset[1])))
   if(adapt && is.imbalanced){
@@ -243,6 +245,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
     rejection$average.pval <-
       1-pchisq(k0*residual_score_batch(env, class.frequency, batch), dof)
   }
+
 
 
   #initialise intermediates
@@ -275,7 +278,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
     }
 
     for (i in seq_len(n_repeat)){
-      # choose a random sample from dataset (rows: samples, columns: parameters)
+      # choose a random sample from dataset (rows: samples, columns: features)
       idx.runs <- sample.int(dim.dataset[1], size = testSize)
       env <- cbind(knn$nn.index[idx.runs,seq_len(k0-1)], idx.runs)
       #env.rand <- t(sapply(rep(dim.dataset[1],testSize),  sample.int, k0))
@@ -288,6 +291,16 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
         p.val.test <- apply(env, 1, FUN = chi_batch_test,
                             class.frequency, batch,  dof)
       }
+      #get batch which is contributing most to the batch effect
+      is.rejected <- p.val.test < alpha
+      if(sum(is.rejected)>1){
+        rejection$badBatch <- as.data.frame(table(unlist(apply(env[is.rejected,],
+                                                 1, max_deviance_batch,
+                                                 class.frequency, batch))))
+        colnames(rejection$badBatch) <- c('batch', 'count')
+      }
+
+
       #p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency,
       #batch,  dof)
       p.val.test.null <-  apply(apply(batch.shuff, 2,
@@ -299,7 +312,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
 
       #summarise test results
       kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
-      kBET.observed[i] <- sum(p.val.test < alpha) / length(p.val.test)
+      kBET.observed[i] <- sum(is.rejected) / length(p.val.test)
 
       #compute significance
       kBET.signif[i] <-
@@ -471,6 +484,15 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
         p.val.test <- apply(env, 1, FUN = chi_batch_test,
                             class.frequency, batch,  dof)
       }
+      #get batch which is contributing most to the batch effect
+      #print(dim(env))
+      is.rejected <- p.val.test < alpha
+      if(sum(is.rejected)>1){
+        rejection$badBatch <- as.data.frame(table(unlist(apply(env[is.rejected,],
+                                                               1, max_deviance_batch,
+                                                               class.frequency, batch))))
+        colnames(rejection$badBatch) <- c('batch', 'count')
+      }
 
       p.val.test.null <- apply(batch.shuff, 2,
                                function(x, freq, dof, envir) {
@@ -486,7 +508,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
                                        sum(x < alpha) / length(x)},
                                      alpha))
 
-      kBET.observed[i] <- sum(p.val.test < alpha) / length(p.val.test)
+      kBET.observed[i] <- sum(is.rejected) / length(p.val.test)
 
       #compute significance
       kBET.signif[i] <-

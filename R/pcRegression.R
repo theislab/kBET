@@ -25,7 +25,12 @@
 #' @export
 pcRegression <- function(pca.data, batch, tol=1e-16){
   batch.levels <- unique(batch)
-
+#make sure you do not try to assess more PCs than actually computed 
+  pca_rank = ncol(pca.data$x)
+  if(length(pca.data$sdev) > pca_rank) {
+    pca.data$sdev = pca.data$sdev[1:pca_rank]
+    }
+  
   if(length(batch.levels)==2){
     #r2.batch.raw <- r2.batch
     correlate.fun <- function(rot.data, batch){

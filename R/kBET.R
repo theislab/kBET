@@ -191,14 +191,15 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
     is.imbalanced <- p.out < alpha
     if(is.imbalanced){
       new.frequencies <- table(batch[-outsider])/length(batch[-outsider])
+      print(new.frequencies)
       new.class.frequency <- data.frame(class = names(new.frequencies),
                                         freq = as.numeric(new.frequencies))
       if(verbose){
         cat(paste0('There are ', length(outsider), ' cells (',
                    round(length(outsider)/length(batch)*100,3),
                    '%) that do not appear in any neighbourhood.\n',
-                   'The expected frequencies for each category have
-                    been adapted.\n',
+                   'The expected frequencies for each',
+                   ' category have been adapted.\n',
                    'Cell indexes are saved to result list.\n'))
       }
     }

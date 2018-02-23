@@ -186,21 +186,29 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
     # idx.run <- sample.int(dim.dataset[1], size = min(2*testSize, dim.dataset[1]))
     outsider <- which(!(seq_len(dim.dataset[1]) %in%
                           knn$nn.index[,seq_len(k0-1)]))
-    outsider.batch <- table(batch[outsider])
-    p.out <- chi_batch_test(outsider, class.frequency, batch,  dof)
-    is.imbalanced <- p.out < alpha
-    if(is.imbalanced){
-      new.frequencies <- table(batch[-outsider])/length(batch[-outsider])
-      print(new.frequencies)
-      new.class.frequency <- data.frame(class = names(new.frequencies),
-                                        freq = as.numeric(new.frequencies))
-      if(verbose){
-        cat(paste0('There are ', length(outsider), ' cells (',
-                   round(length(outsider)/length(batch)*100,3),
-                   '%) that do not appear in any neighbourhood.\n',
-                   'The expected frequencies for each',
-                   ' category have been adapted.\n',
-                   'Cell indexes are saved to result list.\n'))
+    is.imbalanced <- FALSE #initialisation
+    p.out <- 1
+    #avoid unwanted things happen if length(outsider) == 0
+    if(length(outsider)>0){
+      outsider.batch <- table(batch[outsider])
+      p.out <- chi_batch_test(outsider, class.frequency, batch,  dof)
+      is.imbalanced <- p.out < alpha
+      if(is.imbalanced){
+        new.frequencies <- table(batch[-outsider])/length(batch[-outsider])
+        new.class.frequency <- data.frame(class = names(new.frequencies),
+                                          freq = as.numeric(new.frequencies))
+        if(verbose){
+          cat(paste0('There are ', length(outsider), ' cells (',
+                     round(length(outsider)/length(batch)*100,3),
+                     '%) that do not appear in any neighbourhood.\n',
+                     'The expected frequencies for each category have
+                     been adapted.\n',
+                     'Cell indexes are saved to result list.\n'))
+        }
+      }else{
+        if(verbose){
+          cat(paste0('No outsiders found.'))
+        }
       }
     }
   }

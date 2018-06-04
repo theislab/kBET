@@ -2,9 +2,12 @@
 #'
 #' @description pcRegression does a linear model fit of principal components
 #' and a batch (categorical) variable
-#' @param pca.data a list as created by 'prcomp', pcRegression needs $x:
+#' @param pca.data a list as created by 'prcomp', pcRegression needs
+#' \itemize{
+#'  \item \code{x} -
 #' the principal components (PCs, correctly: the rotated data) and
-#' $sdev: the standard deviations of the PCs)
+#' \item \code{sdev} - the standard deviations of the PCs)
+#' }
 #' @param batch vector with the batch covariate (for each cell)
 #' @param tol truncation threshold for significance level, default: 1e-16
 #' @return List summarising principal component regression

@@ -25,26 +25,17 @@
 #' @export
 pcRegression <- function(pca.data, batch, tol=1e-16){
   batch.levels <- unique(batch)
-#make sure you do not try to assess more PCs than actually computed 
+#make sure you do not try to assess more PCs than actually computed
   pca_rank = ncol(pca.data$x)
   if(length(pca.data$sdev) > pca_rank) {
     pca.data$sdev = pca.data$sdev[1:pca_rank]
     }
-  
+
   if(length(batch.levels)==2){
     #r2.batch.raw <- r2.batch
-    correlate.fun <- function(rot.data, batch){
-        a <- lm(rot.data ~ batch)
-        result <- numeric(2)
-        result[1] <- summary(a)$r.squared #coefficient of determination
-        result[2] <- summary(a)$coefficients[2,4] #p-value (significance level)
-        t.test.result <- t.test(rot.data[batch==batch.levels[1]],
-                                rot.data[batch==batch.levels[2]], paired = FALSE)
-        result[3] <- t.test.result$p.value
-        return(result)
-    }
+
     # for-loop replaced by correlate.fun and apply
-    r2.batch <- apply(pca.data$x, 2, correlate.fun, batch)
+    r2.batch <- apply(pca.data$x, 2, correlate.fun_two, batch, batch.levels)
     r2.batch <- t(r2.batch)
     colnames(r2.batch) <- c('R.squared', 'p.value.lm', 'p.value.t.test')
 
@@ -54,17 +45,11 @@ pcRegression <- function(pca.data, batch, tol=1e-16){
 
 
   #r2.batch.raw <- r2.batch
-  correlate.fun <- function(rot.data, batch){
-      a <- lm(rot.data ~ batch)
-      result <- numeric(2)
-      result[1] <- summary(a)$r.squared #coefficient of determination
-      result[2] <- summary(a)$coefficients[2,4] #p-value (significance level)
-      return(result)
-  }
-  r2.batch <- apply(pca.data$x, 2, correlate.fun, batch)
+
+  r2.batch <- apply(pca.data$x, 2, correlate.fun_gen, batch)
 
   r2.batch <- t(r2.batch)
-  colnames(r2.batch) <- c('R.squared', 'p.value.lm')
+  colnames(r2.batch) <- c('R.squared', 'p.value.lm', 'p.value.F.test')
   # for-loop replaced by correlate.fun and apply
   #for (k in 1:dim(r2.batch)[1]){
   #    a <- lm(pca.data$x[,k] ~ batch)
@@ -73,7 +58,7 @@ pcRegression <- function(pca.data, batch, tol=1e-16){
   #}
 
   r2.batch[r2.batch[,2]<tol,2] <- tol
-
+  r2.batch[r2.batch[,3]<tol,3] <- tol
   }
 
   argmin <- which(r2.batch[,2]==min(r2.batch[,2]))
@@ -88,3 +73,5 @@ pcRegression <- function(pca.data, batch, tol=1e-16){
   result$r2 <- r2.batch
   return(result)
 }
+
+

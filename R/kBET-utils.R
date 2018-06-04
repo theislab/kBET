@@ -131,4 +131,33 @@ multiNom <- function(x, y, z) {
   tmp <- multinomial.test(as.numeric(table(z.f[x])),y)
   return(tmp$p.value)}
 
+#significance test for pcRegression (two levels)
+correlate.fun_two <- function(rot.data, batch, batch.levels){
+  #rot.data: some vector (numeric entries)
+  #batch: some vector (categoric entries)
+  a <- lm(rot.data ~ batch)
+  result <- numeric(2)
+  result[1] <- summary(a)$r.squared #coefficient of determination
+  result[2] <- summary(a)$coefficients[2,4] #p-value (significance level)
+  t.test.result <- t.test(rot.data[batch==batch.levels[1]],
+                          rot.data[batch==batch.levels[2]], paired = FALSE)
+  result[3] <- t.test.result$p.value
+  return(result)
+}
+
+#significance test for pcRegression (more than two levels)
+correlate.fun_gen <- function(rot.data, batch){
+  #rot.data: some vector (numeric covariate)
+  #batch: some vector (categoric covariate)
+  a <- lm(rot.data ~ batch)
+  result <- numeric(2)
+  result[1] <- summary(a)$r.squared #coefficient of determination
+  F.test.result <- aov(rot.data ~ batch)
+  F.test.summary <- summary(F.test.result)
+
+  result[2] <- summary(a)$coefficients[2,4] #p-value (significance level)
+  result[3] <- F.test.summary[[1]]$'Pr(>F)'[1] #p-value of the one-way anova test
+
+  return(result)
+}
 

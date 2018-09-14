@@ -9,7 +9,7 @@ kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
   addTest = FALSE, verbose = FALSE, plot = TRUE, adapt = TRUE)
 }
 \arguments{
-\item{df}{dataset (rows: samples, columns: parameters)}
+\item{df}{dataset (rows: samples, columns: features)}
 
 \item{batch}{batch id for each cell or a data frame with
 both condition and replicates}
@@ -61,6 +61,8 @@ list object
    \item \code{stats} - extended test summary for every sample
    \item \code{params} - list of input parameters and adapted parameters,
    respectively
+   \item \code{badBatch} - the batches whose frequencies deviate most
+   from expected frequencies
    \item \code{outsider} - only shown if \code{adapt=TRUE}. List of samples
         without mutual nearest neighbour: \itemize{
     \item \code{index} - index of each outsider sample)

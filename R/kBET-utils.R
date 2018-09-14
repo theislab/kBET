@@ -1,7 +1,9 @@
 #' @importFrom stats pchisq pnorm
 #a wrapper for kBET to fix a neighbourhood size
 scan_nb <- function(x,df,batch, knn){
-    res <- kBET(df=df, batch=batch, k0=x, knn=knn, testSize=NULL, heuristic=FALSE, n_repeat=10, alpha=0.05, addTest = FALSE, plot=FALSE, verbose=FALSE, adapt=FALSE)
+    res <- kBET(df=df, batch=batch, k0=x, knn=knn, testSize=NULL,
+                heuristic=FALSE, n_repeat=10, alpha=0.05,
+                addTest = FALSE, plot=FALSE, verbose=FALSE, adapt=FALSE)
     result <- res$summary
     result <- result$kBET.observed[1]
 }
@@ -18,6 +20,21 @@ residual_score_batch <- function(knn.set, class.freq, batch)
   #compute chi-square test statistics
   resScore <- sum((full.classes - exp.freqs)^2/exp.freqs)
   return(resScore)
+}
+
+#which batch has the largest deviance (and is underrepresented)
+max_deviance_batch <- function(knn.set, class.freq, batch)
+{
+  #knn.set: indices of nearest neighbours
+  #empirical frequencies in nn-environment (sample 1)
+  freq.env <- table(batch[knn.set])/length(knn.set)
+  full.classes <- rep(0, length(class.freq$class))
+  full.classes[ class.freq$class %in% names(freq.env)] <- freq.env
+  exp.freqs <- class.freq$freq
+  #compute chi-square test statistics
+  allScores <- (full.classes - exp.freqs)/exp.freqs
+  maxBatch <- batch[which(allScores==min(allScores))]
+  return(maxBatch)
 }
 
 
@@ -48,7 +65,8 @@ lrt_approximation <- function(knn.set, class.freq, batch, df)
   freq.env <- obs.env/sum(obs.env) #observed 'probabilities'
   full.classes <- rep(0, length(class.freq$class))
   obs.classes <- class.freq$class %in% names(freq.env)
-  #for stability issues (to avoid the secret division by 0): introduce another alternative model where the observed probability
+  #for stability issues (to avoid the secret division by 0): introduce
+  #another alternative model where the observed probability
   #is either the empirical frequency or 1/(sample size) at minimum
   if (length(full.classes) > sum(obs.classes)){
     dummy.count <- length(full.classes) -sum(obs.classes)
@@ -59,7 +77,8 @@ lrt_approximation <- function(knn.set, class.freq, batch, df)
     full.classes[ obs.classes] <- freq.env
   }
   exp.freqs <- class.freq$freq #expected 'probabilities'
-  #compute likelihood ratio of null and alternative hypothesis, test statistics converges to chi-square distribution
+  #compute likelihood ratio of null and alternative hypothesis,
+  #test statistics converges to chi-square distribution
   full.obs <- rep(0, length(class.freq$class))
   full.obs[obs.classes] <- obs.env
 
@@ -112,4 +131,33 @@ multiNom <- function(x, y, z) {
   tmp <- multinomial.test(as.numeric(table(z.f[x])),y)
   return(tmp$p.value)}
 
+#significance test for pcRegression (two levels)
+correlate.fun_two <- function(rot.data, batch, batch.levels){
+  #rot.data: some vector (numeric entries)
+  #batch: some vector (categoric entries)
+  a <- lm(rot.data ~ batch)
+  result <- numeric(2)
+  result[1] <- summary(a)$r.squared #coefficient of determination
+  result[2] <- summary(a)$coefficients[2,4] #p-value (significance level)
+  t.test.result <- t.test(rot.data[batch==batch.levels[1]],
+                          rot.data[batch==batch.levels[2]], paired = FALSE)
+  result[3] <- t.test.result$p.value
+  return(result)
+}
+
+#significance test for pcRegression (more than two levels)
+correlate.fun_gen <- function(rot.data, batch){
+  #rot.data: some vector (numeric covariate)
+  #batch: some vector (categoric covariate)
+  a <- lm(rot.data ~ batch)
+  result <- numeric(2)
+  result[1] <- summary(a)$r.squared #coefficient of determination
+  F.test.result <- aov(rot.data ~ batch)
+  F.test.summary <- summary(F.test.result)
+
+  result[2] <- summary(a)$coefficients[2,4] #p-value (significance level)
+  result[3] <- F.test.summary[[1]]$'Pr(>F)'[1] #p-value of the one-way anova test
+
+  return(result)
+}
 

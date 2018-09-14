@@ -40,8 +40,6 @@
 #'    \item \code{stats} - extended test summary for every sample
 #'    \item \code{params} - list of input parameters and adapted parameters,
 #'    respectively
-#'    \item \code{badBatch} - the batches whose frequencies deviate most
-#'    from expected frequencies
 #'    \item \code{outsider} - only shown if \code{adapt=TRUE}. List of samples
 #'         without mutual nearest neighbour: \itemize{
 #'     \item \code{index} - index of each outsider sample)
@@ -244,7 +242,6 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   rejection$results   <- data.frame(tested = numeric(dim.dataset[1]),
                                     kBET.pvalue.test = rep(0,dim.dataset[1]),
                                     kBET.pvalue.null = rep(0, dim.dataset[1]))
-  rejection$badBatch <- numeric(1)
   #get average residual score
   env <- as.vector(cbind(knn$nn.index[,seq_len(k0-1)], seq_len(dim.dataset[1])))
   if(adapt && is.imbalanced){
@@ -300,14 +297,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
         p.val.test <- apply(env, 1, FUN = chi_batch_test,
                             class.frequency, batch,  dof)
       }
-      #get batch which is contributing most to the batch effect
+
       is.rejected <- p.val.test < alpha
-      if(sum(is.rejected)>1){
-        rejection$badBatch <- as.data.frame(table(unlist(apply(env[is.rejected,],
-                                                 1, max_deviance_batch,
-                                                 class.frequency, batch))))
-        colnames(rejection$badBatch) <- c('batch', 'count')
-      }
+
 
 
       #p.val.test <- apply(env, 1, FUN = chi_batch_test, class.frequency,
@@ -493,15 +485,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
         p.val.test <- apply(env, 1, FUN = chi_batch_test,
                             class.frequency, batch,  dof)
       }
-      #get batch which is contributing most to the batch effect
+
       #print(dim(env))
       is.rejected <- p.val.test < alpha
-      if(sum(is.rejected)>1){
-        rejection$badBatch <- as.data.frame(table(unlist(apply(env[is.rejected,],
-                                                               1, max_deviance_batch,
-                                                               class.frequency, batch))))
-        colnames(rejection$badBatch) <- c('batch', 'count')
-      }
 
       p.val.test.null <- apply(batch.shuff, 2,
                                function(x, freq, dof, envir) {

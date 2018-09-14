@@ -31,7 +31,7 @@
 #'     testdata <- create_testset_multibatch(n.genes=1000, n.batch=3, plattform='any')
 #'     pca.data <- prcomp(testdata$data, center=TRUE)
 #'     pc.reg.result <- pcRegression(pca.data, testdata$batch)
-#' @importFrom stats t.test lm aov
+#' @importFrom stats t.test lm aov p.adjust
 #' @export
 pcRegression <- function(pca.data, batch,n_top=50, tol=1e-16){
   batch.levels <- unique(batch)

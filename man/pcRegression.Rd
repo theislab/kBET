@@ -7,9 +7,12 @@
 pcRegression(pca.data, batch, tol = 1e-16)
 }
 \arguments{
-\item{pca.data}{a list as created by 'prcomp', pcRegression needs $x:
+\item{pca.data}{a list as created by 'prcomp', pcRegression needs
+\itemize{
+ \item \code{x} -
 the principal components (PCs, correctly: the rotated data) and
-$sdev: the standard deviations of the PCs)}
+\item \code{sdev} - the standard deviations of the PCs)
+}}
 
 \item{batch}{vector with the batch covariate (for each cell)}
 

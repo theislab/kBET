@@ -48,17 +48,6 @@ batch.estimate <- kBET(data, batch)
 
 For a single-cell RNAseq dataset with less than 1,000 samples, the estimated run time is less than 2 minutes. 
 
-## Compute a silhouette width and PCA-based measure:
-
-```R
-#data: a matrix (rows: samples, columns: features (genes))
-#batch: vector or factor with batch label of each cell 
-pca.data <- prcomp(data, center=TRUE) #compute PCA representation of the data
-batch.silhouette <- batch_sil(pca.data, batch)
-batch.pca <- pcRegression(pca.data, batch)
-```
-For a single-cell RNAseq dataset with less than 1,000 samples, the estimated run time is less than 2 minutes. 
-
 ### Plot *kBET*'s rejection rate
 
 By default (`plot = TRUE`), *kBET* returns a boxplot of observed and expected rejection rates for a data set. You might want to turn off the display of these plots and create them elsewhere. *kBET* returns all information that is needed in the `stats` part of the results. 
@@ -90,4 +79,14 @@ knn <- get.knn(data, k=k0, algorithm = 'cover_tree')
 batch.estimate <- kBET(data, batch, k = k0, knn = knn)
 ```
 
+## Compute a silhouette width and PCA-based measure:
+
+```R
+#data: a matrix (rows: samples, columns: features (genes))
+#batch: vector or factor with batch label of each cell 
+pca.data <- prcomp(data, center=TRUE) #compute PCA representation of the data
+batch.silhouette <- batch_sil(pca.data, batch)
+batch.pca <- pcRegression(pca.data, batch)
+```
+For a single-cell RNAseq dataset with less than 1,000 samples, the estimated run time is less than 2 minutes. 
 

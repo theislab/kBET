@@ -64,21 +64,14 @@
 #' @include kBET-utils.R
 #' @name kBET
 #' @export
-kBET <- function(df, batch, k0=NULL,knn=NULL,
-                 testSize=NULL,do.pca=TRUE, dim.pca = 50,
-                 heuristic=TRUE,n_repeat=100,
+kBET <- function(df, batch, k0=NULL, knn = NULL,
+                 testSize=NULL, do.pca = TRUE, dim.pca = 50,
+                 heuristic=TRUE, n_repeat = 100,
                  alpha=0.05, addTest = FALSE,
-                 verbose=FALSE, plot = TRUE, adapt=TRUE){
-
-
-  if (plot==TRUE & heuristic==TRUE){
-    #source('addalpha.R')
-    colorset <- addalpha(brewer.pal(8, 'Set2'), 0.5)
-    colorset.nt <- brewer.pal(8, 'Set2')
-  }
+                 verbose=FALSE, plot = TRUE, adapt=TRUE) {
 
   #create a subsetting mode:
-  #if (is.data.frame(batch) && dim(batch)[2]>1){
+  #if (is.data.frame(batch) && dim(batch)[2]>1) {
   #  cat('Complex study design detected.\n')
   #  design.names <- colnames(batch)
   #  cat(paste0('Subset by ', design.names[[2]], '\n'))
@@ -93,8 +86,8 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
 
 
   #preliminaries:
-  dof <- length(unique(batch))-1 #degrees of freedom
-  if(is.factor(batch)){
+  dof <- length(unique(batch)) - 1 #degrees of freedom
+  if (is.factor(batch)) {
     batch <- droplevels(batch)
   }
 
@@ -108,12 +101,12 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   dataset <- df
   dim.dataset <- dim(dataset)
   #check the feasibility of data input
-  if(dim.dataset[1]!=length(batch) & dim.dataset[2]!=length(batch)){
+  if (dim.dataset[1] != length(batch) && dim.dataset[2] != length(batch)) {
     stop("Input matrix and batch information do not match. Execution halted.")
   }
 
-  if(dim.dataset[2]==length(batch) & dim.dataset[1]!=length(batch)){
-    if(verbose){
+  if (dim.dataset[2] == length(batch) && dim.dataset[1] != length(batch)) {
+    if (verbose) {
       cat('Input matrix has samples as columns. kBET needs samples as rows.
         Transposing...\n')
     }
@@ -122,46 +115,46 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   }
 
 
-  stopifnot(class(n_repeat) == 'numeric', n_repeat>0)
+  stopifnot(class(n_repeat) == 'numeric', n_repeat > 0)
 
   do_heuristic <- FALSE
-  if (is.null(k0) || k0>=dim.dataset[1]){
+  if (is.null(k0) || k0 >= dim.dataset[1]) {
     do_heuristic <- heuristic
-    if(!heuristic){
+    if (!heuristic) {
       #default environment size: quarter the size of the largest batch
-      k0=floor(mean(class.frequency$freq)*dim.dataset[1]/4)
-    }else{
+      k0 <- floor(mean(class.frequency$freq)*dim.dataset[1]/4)
+    } else {
       #default environment size: three quarter the size of the largest batch
-      k0=floor(mean(class.frequency$freq)*dim.dataset[1]*0.75)
-      if(k0<10){
+      k0 <- floor(mean(class.frequency$freq)*dim.dataset[1]*0.75)
+      if (k0 < 10) {
         stop("Your dataset has too few samples to run a heuristic.\n
              Please assign k0 and set heuristic=FALSE.")
       }
     }
-    if(verbose)
-    {cat('Initial neighbourhood size is set to ')
-      cat(paste0(k0, '.\n'))}
+    if (verbose) {
+      cat('Initial neighbourhood size is set to ')
+      cat(paste0(k0, '.\n'))
+    }
   }
   # find KNNs
-  if (is.null(knn)){
-
-    if(!do.pca){
+  if (is.null(knn)) {
+    if (!do.pca) {
       if (verbose) {
         cat('finding knns...')
         tic <- proc.time()
       }
-      knn <- get.knn(dataset, k=k0, algorithm = 'cover_tree')
-    }else{
+      knn <- get.knn(dataset, k = k0, algorithm = 'cover_tree')
+    } else {
       dim.comp <- min(dim.pca, dim.dataset[2])
-      if(verbose)
-      {cat('reducing dimensions with svd first...\n')
+      if (verbose) {
+        cat('reducing dimensions with svd first...\n')
       }
-      data.pca <- svd(x= dataset,nu = dim.comp, nv=0)
+      data.pca <- svd(x = dataset, nu = dim.comp, nv = 0)
       if (verbose) {
         cat('finding knns...')
         tic <- proc.time()
       }
-      knn <- get.knn(data.pca$u,  k=k0, algorithm = 'cover_tree')
+      knn <- get.knn(data.pca$u,  k = k0, algorithm = 'cover_tree')
     }
     if (verbose) {
       cat('done. Time:\n')
@@ -170,10 +163,10 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   }
 
   #set number of tests
-  if (is.null(testSize) || (floor(testSize)<1 | dim.dataset[1]< testSize)){
+  if (is.null(testSize) || (floor(testSize) < 1 || dim.dataset[1] < testSize)) {
     test.frac <- 0.1
     testSize <- ceiling(dim.dataset[1]*test.frac)
-    if (testSize<25 & dim.dataset[1]>25){
+    if (testSize < 25 && dim.dataset[1] > 25) {
       testSize <- 25
     }
     if (verbose) {
@@ -182,22 +175,20 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
     }
   }
   #decide to adapt general frequencies
-  if(adapt){
+  if (adapt) {
     # idx.run <- sample.int(dim.dataset[1], size = min(2*testSize, dim.dataset[1]))
-    outsider <- which(!(seq_len(dim.dataset[1]) %in%
-                          knn$nn.index[,seq_len(k0-1)]))
+    outsider <- which(!(seq_len(dim.dataset[1]) %in% knn$nn.index[, seq_len(k0 - 1)]))
     is.imbalanced <- FALSE #initialisation
     p.out <- 1
     #avoid unwanted things happen if length(outsider) == 0
-    if(length(outsider)>0){
-      outsider.batch <- table(batch[outsider])
+    if (length(outsider) > 0) {
       p.out <- chi_batch_test(outsider, class.frequency, batch,  dof)
       is.imbalanced <- p.out < alpha
-      if(is.imbalanced){
+      if (is.imbalanced) {
         new.frequencies <- table(batch[-outsider])/length(batch[-outsider])
         new.class.frequency <- data.frame(class = names(new.frequencies),
                                           freq = as.numeric(new.frequencies))
-        if(verbose){
+        if (verbose) {
           cat(paste0('There are ', length(outsider), ' cells (',
                      round(length(outsider)/length(batch)*100,3),
                      '%) that do not appear in any neighbourhood.\n',
@@ -205,8 +196,8 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
                      been adapted.\n',
                      'Cell indexes are saved to result list.\n'))
         }
-      }else{
-        if(verbose){
+      } else {
+        if (verbose) {
           cat(paste0('No outsiders found.'))
         }
       }
@@ -214,21 +205,21 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
 
   }
 
-  if(do_heuristic){
+  if (do_heuristic) {
     #btw, when we bisect here that returns some interval with
     #the optimal neihbourhood size
-    if (verbose){
+    if (verbose) {
       cat('Determining optimal neighbourhood size ...')
     }
-    opt.k <- bisect(scan_nb, bounds=c(10,k0), known=NULL, dataset, batch, knn)
+    opt.k <- bisect(scan_nb, bounds = c(10, k0), known = NULL, dataset, batch, knn)
     #result
-    if(length(opt.k)>1){
+    if (length(opt.k) > 1) {
       k0 <- opt.k[2]
-      if(verbose==TRUE){
+      if (verbose) {
         cat(paste0('done.\nNew size of neighbourhood is set to ', k0, '.\n'))
       }
-    }else{
-      if(verbose==TRUE){
+    } else {
+      if (verbose) {
         cat(paste0('done.\nHeuristic did not change the
                    neighbourhood.\n If results appear inconclusive,
                    change k0=', k0, '.\n'))
@@ -246,14 +237,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
                                     kBET.pvalue.test = rep(0,dim.dataset[1]),
                                     kBET.pvalue.null = rep(0, dim.dataset[1]))
   #get average residual score
-  env <- as.vector(cbind(knn$nn.index[,seq_len(k0-1)], seq_len(dim.dataset[1])))
-  if(adapt && is.imbalanced){
-    rejection$average.pval <-
-      1-pchisq(k0*residual_score_batch(env, new.class.frequency, batch), dof)
-  }else{
-    rejection$average.pval <-
-      1-pchisq(k0*residual_score_batch(env, class.frequency, batch), dof)
-  }
+  env <- as.vector(cbind(knn$nn.index[, seq_len(k0 - 1)], seq_len(dim.dataset[1])))
+  cf <- if (adapt && is.imbalanced) new.class.frequency else class.frequency
+  rejection$average.pval <- 1 - pchisq(k0 * residual_score_batch(env, cf, batch), dof)
 
 
 
@@ -263,7 +249,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   kBET.signif <- numeric(n_repeat)
 
 
-  if(addTest==TRUE){
+  if (addTest) {
     #initialize result list
     rejection$summary$lrt.expected <- numeric(4)
     rejection$summary$lrt.observed <- numeric(4)
@@ -275,7 +261,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
     lrt.observed <- numeric(n_repeat)
     lrt.signif <- numeric(n_repeat)
     #decide to perform exact test or not
-    if (choose(k0+dof,dof)<5e5 & k0 <= min(table(batch))){
+    if (choose(k0 + dof,dof) < 5e5 && k0 <= min(table(batch))) {
       exact.expected <- numeric(n_repeat)
       exact.observed <- numeric(n_repeat)
       exact.signif <- numeric(n_repeat)
@@ -286,17 +272,17 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       rejection$results$exact.pvalue.null <- rep(0, dim.dataset[1])
     }
 
-    for (i in seq_len(n_repeat)){
+    for (i in seq_len(n_repeat)) {
       # choose a random sample from dataset (rows: samples, columns: features)
       idx.runs <- sample.int(dim.dataset[1], size = testSize)
-      env <- cbind(knn$nn.index[idx.runs,seq_len(k0-1)], idx.runs)
+      env <- cbind(knn$nn.index[idx.runs, seq_len(k0 - 1)], idx.runs)
       #env.rand <- t(sapply(rep(dim.dataset[1],testSize),  sample.int, k0))
 
       #perform test
-      if(adapt && is.imbalanced){
+      if (adapt && is.imbalanced) {
         p.val.test <- apply(env, 1, FUN = chi_batch_test,
                             new.class.frequency, batch,  dof)
-      }else{
+      } else {
         p.val.test <- apply(env, 1, FUN = chi_batch_test,
                             class.frequency, batch,  dof)
       }
@@ -321,9 +307,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       #compute significance
       kBET.signif[i] <-
         1 - ptnorm(kBET.observed[i],
-                   mu=kBET.expected[i],
-                   sd=sqrt(kBET.expected[i]*(1-kBET.expected[i])/testSize),
-                   alpha=alpha)
+                   mu = kBET.expected[i],
+                   sd = sqrt(kBET.expected[i] * (1 - kBET.expected[i]) / testSize),
+                   alpha = alpha)
 
       #assign results to result table
       rejection$results$tested[idx.runs] <- 1
@@ -332,13 +318,8 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
 
 
       #compute likelihood-ratio test (approximation for multinomial exact test)
-      if(adapt && is.imbalanced){
-        p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation,
-                                new.class.frequency, batch,  dof)
-      }else{
-        p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation,
-                                class.frequency, batch,  dof)
-      }
+      cf <- if (adapt && is.imbalanced) new.class.frequency else class.frequency
+      p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation, new.class.frequency, batch, dof)
       p.val.test.lrt.null <- apply(apply(batch.shuff, 2,
                                          function(x, freq, dof, envir) {
                                            apply(envir, 1, FUN = lrt_approximation, freq, x, dof)},
@@ -351,9 +332,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
 
       lrt.signif[i] <-
         1 - ptnorm(lrt.observed[i],
-                   mu=lrt.expected[i],
-                   sd=sqrt(lrt.expected[i]*(1-lrt.expected[i])/testSize),
-                   alpha=alpha)
+                   mu = lrt.expected[i],
+                   sd = sqrt(lrt.expected[i] * (1 - lrt.expected[i]) / testSize),
+                   alpha = alpha)
 
       rejection$results$lrt.pvalue.test[idx.runs] <- p.val.test.lrt
       rejection$results$lrt.pvalue.null[idx.runs] <- p.val.test.lrt.null
@@ -365,11 +346,11 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       #are large enough to 'imitate' sampling with replacement)
       #For example: k0=33 and dof=5 yields 501942 possible
       #choices and a computation time of several seconds (on a 16GB RAM machine)
-      if (exists(x='exact.observed')){
-        if(adapt && is.imbalanced){
+      if (exists(x = 'exact.observed')) {
+        if (adapt && is.imbalanced) {
           p.val.test.exact <- apply(env, 1, multiNom,
                                     new.class.frequency$freq, batch)
-        }else{
+        } else {
           p.val.test.exact <- apply(env, 1, multiNom,
                                     class.frequency$freq, batch)
         }
@@ -379,14 +360,14 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
                                               class.frequency$freq, env), 1, mean)
         # apply(env, 1, multiNom, class.frequency$freq, batch.shuff)
 
-        exact.expected[i] <- sum(p.val.test.exact.null<alpha)/testSize
-        exact.observed[i] <- sum(p.val.test.exact<alpha)/testSize
+        exact.expected[i] <- sum(p.val.test.exact.null < alpha)/testSize
+        exact.observed[i] <- sum(p.val.test.exact < alpha)/testSize
         #compute the significance level for the number of rejected data points
         exact.signif[i] <-
           1 - ptnorm(exact.observed[i],
-                     mu=exact.expected[i],
-                     sd=sqrt(exact.expected[i]*(1-exact.expected[i])/testSize),
-                     alpha=alpha)
+                     mu = exact.expected[i],
+                     sd = sqrt(exact.expected[i] * (1 - exact.expected[i]) / testSize),
+                     alpha = alpha)
         #p-value distribution
         rejection$results$exact.pvalue.test[idx.runs] <- p.val.test.exact
         rejection$results$exact.pvalue.null[idx.runs] <- p.val.test.exact.null
@@ -395,7 +376,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
 
 
 
-    if (n_repeat>1){
+    if (n_repeat > 1) {
       #summarize chi2-results
       CI95 <- c(0.025,0.5,0.975)
       rejection$summary$kBET.expected <-  c(mean(kBET.expected) ,
@@ -413,7 +394,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       rejection$summary$lrt.signif <- c(mean(lrt.signif) ,
                                         quantile(lrt.signif, CI95))
       #summarize exact test results
-      if (exists(x='exact.observed')){
+      if (exists(x = 'exact.observed')) {
         rejection$summary$exact.expected <-  c(mean(exact.expected) ,
                                                quantile(exact.expected, CI95))
         rejection$summary$exact.observed <-  c(mean(exact.observed) ,
@@ -422,48 +403,48 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
                                             quantile(exact.signif, CI95))
       }
 
-      if (n_repeat<10){
+      if (n_repeat < 10) {
         cat('Warning: The quantile computation for ')
         cat(paste0(n_repeat))
         cat(' subset results is not meaningful.')
       }
 
-      if(plot==TRUE & exists(x='exact.observed')){
-        plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)',
+      if (plot && exists(x = 'exact.observed')) {
+        plot.data <- data.frame(class = rep(c('kBET', 'kBET (random)',
                                             'lrt', 'lrt (random)',
                                             'exact', 'exact (random)'),
-                                          each=n_repeat),
+                                          each = n_repeat),
                                 data =  c(kBET.observed, kBET.expected,
                                           lrt.observed, lrt.expected,
                                           exact.observed, exact.expected))
-        g <-ggplot(plot.data, aes(class, data)) + geom_boxplot() +
-          theme_bw() + labs(x='Test', y='Rejection rate')  +
-          theme(axis.text.x = element_text(angle=45, hjust = 1))
+        g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() +
+          theme_bw() + labs(x = 'Test', y = 'Rejection rate')  +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1))
         print(g)
       }
-      if(plot==TRUE & !exists(x='exact.observed')){
-        plot.data <- data.frame(class=rep(c('kBET', 'kBET (random)',
+      if (plot && !exists(x = 'exact.observed')) {
+        plot.data <- data.frame(class = rep(c('kBET', 'kBET (random)',
                                             'lrt', 'lrt (random)'),
-                                          each=n_repeat),
+                                          each = n_repeat),
                                 data =  c(kBET.observed, kBET.expected,
                                           lrt.observed, lrt.expected))
         g <- ggplot(plot.data, aes(class, data)) + geom_boxplot() +
-          theme_bw() + labs(x='Test', y='Rejection rate') +
-          scale_y_continuous(limits=c(0,1))  +
-          theme(axis.text.x = element_text(angle=45, hjust = 1))
+          theme_bw() + labs(x = 'Test', y  = 'Rejection rate') +
+          scale_y_continuous(limits = c(0,1))  +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1))
         print(g)
       }
 
-    }else{ #i.e. no n_repeat
+    } else {#i.e. no n_repeat
       rejection$summary$kBET.expected <- kBET.expected
       rejection$summary$kBET.observed <- kBET.observed
       rejection$summary$kBET.signif <- kBET.signif
 
-      if (addTest==TRUE){
+      if (addTest) {
         rejection$summary$lrt.expected <- lrt.expected
         rejection$summary$lrt.observed <- lrt.observed
         rejection$summary$lrt.signif <- lrt.signif
-        if (exists(x='exact.observed')){
+        if (exists(x = 'exact.observed')) {
           rejection$summary$exact.expected <-  exact.expected
           rejection$summary$exact.observed <-  exact.observed
           rejection$summary$exact.signif <- exact.signif
@@ -471,20 +452,18 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       }
 
     }
-  }else{ #kBET only
-
-
-    for (i in seq_len(n_repeat)){
+  } else {#kBET only
+    for (i in seq_len(n_repeat)) {
       # choose a random sample from dataset
       #(rows: samples, columns: parameters)
       idx.runs <- sample.int(dim.dataset[1], size = testSize)
-      env <- cbind(knn$nn.index[idx.runs,seq_len(k0-1)], idx.runs)
+      env <- cbind(knn$nn.index[idx.runs,seq_len(k0 - 1)], idx.runs)
 
       #perform test
-      if(adapt && is.imbalanced){
+      if (adapt && is.imbalanced) {
         p.val.test <- apply(env, 1, FUN = chi_batch_test,
                             new.class.frequency, batch,  dof)
-      }else{
+      } else {
         p.val.test <- apply(env, 1, FUN = chi_batch_test,
                             class.frequency, batch,  dof)
       }
@@ -511,48 +490,45 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
       #compute significance
       kBET.signif[i] <-
         1 - ptnorm(kBET.observed[i],
-                   mu=kBET.expected[i],
-                   sd=sqrt(kBET.expected[i]*(1-kBET.expected[i])/testSize),
-                   alpha=alpha)
+                   mu = kBET.expected[i],
+                   sd = sqrt(kBET.expected[i] * (1 - kBET.expected[i]) / testSize),
+                   alpha = alpha)
       #assign results to result table
       rejection$results$tested[idx.runs] <- 1
       rejection$results$kBET.pvalue.test[idx.runs] <- p.val.test
       rejection$results$kBET.pvalue.null[idx.runs] <- rowMeans(p.val.test.null)
     }
 
-    if (n_repeat>1){
+    if (n_repeat > 1) {
       #summarize chi2-results
       CI95 <- c(0.025,0.5,0.975)
-      rejection$summary$kBET.expected <-  c(mean(kBET.expected) ,
-                                            quantile(kBET.expected, CI95))
+      rejection$summary$kBET.expected <- c(mean(kBET.expected), quantile(kBET.expected, CI95))
       rownames(rejection$summary) <- c('mean', '2.5%', '50%', '97.5%')
-      rejection$summary$kBET.observed <-  c(mean(kBET.observed) ,
-                                            quantile(kBET.observed, CI95))
-      rejection$summary$kBET.signif <- c(mean(kBET.signif) ,
-                                         quantile(kBET.signif, CI95))
+      rejection$summary$kBET.observed <- c(mean(kBET.observed), quantile(kBET.observed, CI95))
+      rejection$summary$kBET.signif <- c(mean(kBET.signif), quantile(kBET.signif, CI95))
 
       #return also n_repeat
       rejection$stats$kBET.expected <- kBET.expected
       rejection$stats$kBET.observed <- kBET.observed
       rejection$stats$kBET.signif <- kBET.signif
 
-      if (n_repeat<10){
+      if (n_repeat < 10) {
         cat('Warning: The quantile computation for ')
         cat(paste0(n_repeat))
         cat(' subset results is not meaningful.')
       }
-      if(plot==TRUE){
-        plot.data <- data.frame(class=rep(c('observed(kBET)',
+      if (plot) {
+        plot.data <- data.frame(class = rep(c('observed(kBET)',
                                             'expected(random)'),
-                                          each=n_repeat),
+                                          each = n_repeat),
                                 data =  c( kBET.observed,kBET.expected))
         g <- ggplot(plot.data, aes(class, data)) +
           geom_boxplot() + theme_bw() +
-          labs(x='Test', y='Rejection rate') +
-          scale_y_continuous(limits=c(0,1))
+          labs(x = 'Test', y = 'Rejection rate') +
+          scale_y_continuous(limits = c(0,1))
         print(g)
       }
-    }else{
+    } else {
       rejection$summary$kBET.expected <- kBET.expected[1]
       rejection$summary$kBET.observed <- kBET.observed[1]
       rejection$summary$kBET.signif <- kBET.signif[1]
@@ -572,12 +548,12 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
   rejection$params$plot <- plot
 
   #add outsiders
-  if(adapt){
-    rejection$outsider <-list()
+  if (adapt) {
+    rejection$outsider <- list()
     rejection$outsider$index <- outsider
     rejection$outsider$categories <- table(batch[outsider])
     rejection$outsider$p.val <- p.out
   }
-  return(rejection)
+  rejection
 }
 

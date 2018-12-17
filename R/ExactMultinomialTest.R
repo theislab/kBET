@@ -8,8 +8,7 @@
 # @param numEvents
 # @param verbose
 #' @importFrom stats dmultinom
-ExactMultinomialTest <-function (observed, prob, size, groups, numEvents, verbose)
-{
+ExactMultinomialTest <- function(observed, prob, size, groups, numEvents, verbose) {
   pObs = dmultinom(observed, size = size, prob)
   eventMat <- findVectors(groups, size)
   if (nrow(eventMat) != numEvents)
@@ -21,7 +20,7 @@ ExactMultinomialTest <-function (observed, prob, size, groups, numEvents, verbos
     stop("Wrong values for probabilities. \n This is probably a bug.")
 
 
-  if (verbose){
+  if (verbose) {
     head <- paste("\n Exact Multinomial Test, distance measure: p\n\n")
     tab <- as.data.frame(cbind(numEvents, round(pObs, digits = 4),
                                round(p.value, digits = 4)))

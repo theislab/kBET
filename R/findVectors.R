@@ -1,7 +1,6 @@
 #from EMT package (, function is needed to run ExactMultinomialTest.R)
 
-findVectors <- function (groups, size)
-{
+findVectors <- function(groups, size) {
   if (groups == 1) {
     mat = size
   }

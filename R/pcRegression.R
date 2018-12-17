@@ -38,11 +38,11 @@ pcRegression <- function(pca.data, batch,n_top=50, tol=1e-16){
 #make sure you do not try to assess more PCs than actually computed
   pca_rank = ncol(pca.data$x)
   max_comps <- min(pca_rank, n_top)
-  if(length(pca.data$sdev) > pca_rank) {
+  if (length(pca.data$sdev) > pca_rank) {
     pca.data$sdev = pca.data$sdev[1:pca_rank]
     }
 
-  if(length(batch.levels)==2){
+  if (length(batch.levels) == 2) {
     #r2.batch.raw <- r2.batch
 
     # for-loop replaced by correlate.fun and apply
@@ -50,9 +50,9 @@ pcRegression <- function(pca.data, batch,n_top=50, tol=1e-16){
     r2.batch <- t(r2.batch)
     colnames(r2.batch) <- c('R.squared', 'p.value.lm', 'p.value.t.test')
 
-    r2.batch[r2.batch[,2]<tol,2] <- tol
-    r2.batch[r2.batch[,3]<tol,3] <- tol
-  }else{
+    r2.batch[r2.batch[,2] < tol, 2] <- tol
+    r2.batch[r2.batch[,3] < tol, 3] <- tol
+  } else {
 
 
   #r2.batch.raw <- r2.batch
@@ -68,15 +68,15 @@ pcRegression <- function(pca.data, batch,n_top=50, tol=1e-16){
   #    r2.batch[k,2] <- summary(a)$coefficients['batch',4] #p-value (significance level)
   #}
 
-  r2.batch[r2.batch[,2]<tol,2] <- tol
-  r2.batch[r2.batch[,3]<tol,3] <- tol
+  r2.batch[r2.batch[,2] < tol, 2] <- tol
+  r2.batch[r2.batch[,3] < tol, 3] <- tol
   }
 
-  argmin <- which(r2.batch[,2]==min(r2.batch[,2]))
+  argmin <- which(r2.batch[, 2] == min(r2.batch[, 2]))
   normal <- sum(pca.data$sdev^2)
-  var <- round((pca.data$sdev)^2 / normal *100,1)
+  var <- round((pca.data$sdev)^2 / normal * 100,1)
   batch.var <- sum(r2.batch[,1]*var)/100
-  setsignif <- p.adjust(r2.batch[1:max_comps,2], method='BH')<0.05
+  setsignif <- p.adjust(r2.batch[1:max_comps,2], method = 'BH') < 0.05
   pcCorr <- sqrt(r2.batch[1:max_comps, 1])
   result <- list()
   result$maxVar <- var[argmin]
@@ -85,12 +85,12 @@ pcRegression <- function(pca.data, batch,n_top=50, tol=1e-16){
   result$pcRegscale <- sum(var[1:max_comps][setsignif])/sum(var[1:max_comps])
   result$maxCorr <- max(pcCorr)
   result$maxR2 <- max(r2.batch[1:max_comps, 1])
-  result$msigPC <- 1- (min(c(which(setsignif==TRUE), max_comps+1))-1)/max_comps
-  result$maxsigPC <- 1- (min(c(which(pcCorr==max(pcCorr[setsignif==TRUE])), max_comps+1))-1)/max_comps
+  result$msigPC   <- 1 - (min(c(which(setsignif), max_comps + 1)) - 1) / max_comps
+  result$maxsigPC <- 1 - (min(c(which(pcCorr == max(pcCorr[setsignif])), max_comps + 1)) - 1) / max_comps
   result$R2Var <- batch.var
   result$ExplainedVar <- var
   result$r2 <- r2.batch
-  return(result)
+  result
 }
 
 

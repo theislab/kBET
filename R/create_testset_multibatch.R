@@ -47,45 +47,43 @@ create_testset_multibatch <- function(n.genes=1000,
   #the variance from the QC
 
   #preliminary initialisations:
-  alpha <- 0.05
-  mu<- rbeta(n.genes-1, 2,5)*100
+  mu <- rbeta(n.genes - 1, 2,5) * 100
   mu <- c(mean(mu), mu)
   b0 <- -1.5
 
   cells <- data.frame(plattform = c('C1', 'dropseq', 'any'),
                       batch.size = c(96, 1500, 300))
   #get sample size per batch
-  samples <- rbeta(n.batch,8,2)*cells$batch.size[cells$plattform==plattform]
+  samples <- rbeta(n.batch,8,2)*cells$batch.size[cells$plattform == plattform]
 
   #simulate means of the all batches
   #we choose the variability between batches with the beta distribution.
   #Expected value= a/(a+b)= 1/10 here.
-  mu.batch <- sapply(floor(n.genes* rbeta(n.batch, 1,9)),
-                     function(x, mu){c(rgamma(x,1), rep(1, n.genes-x))*mu},
+  mu.batch <- sapply(floor(n.genes * rbeta(n.batch, 1,9)),
+                     function(x, mu) c(rgamma(x,1), rep(1, n.genes - x)) * mu,
                      mu)
   #model drop-out rate as logistic model
-  b2 <- apply(mu.batch, 2, function(x){1/quantile(x,0.5)})
-  decay.prob2 <- apply(mu.batch,2, function(mu, b0){
-    b1 <- 1/quantile(mu,0.5)
-    res <- 1/(1+exp(-(b0+b1*mu)))}, b0)
+  decay.prob2 <- apply(mu.batch, 2, function(mu, b0) {
+    b1 <- 1 / quantile(mu, 0.5)
+    res <- 1 / (1 + exp(-(b0 + b1 * mu)))
+  }, b0)
 
   #simulate counts in all batches
-  testset <- sapply(seq_len(n.genes),function(k,sample.size, decay.prob, mu){
-    unlist(sapply(seq_len(n.batch),
-                  function(x,sample.size, decay.prob, mu){
-                    rnegbin(sample.size[x], mu=mu[k,x], 1)*
-                    rbinom(sample.size[x], 1, decay.prob[k,x])},
-            sample.size, decay.prob, mu))}, samples, decay.prob2, mu.batch)
+  testset <- sapply(seq_len(n.genes), function(k, sample.size, decay.prob, mu) {
+    unlist(sapply(seq_len(n.batch), function(x, sample.size, decay.prob, mu) {
+      rnegbin(sample.size[x], mu = mu[k,x], 1) * rbinom(sample.size[x], 1, decay.prob[k,x])
+    }, sample.size, decay.prob, mu))
+  }, samples, decay.prob2, mu.batch)
 
   result <- list()
 
   result$data <- testset #rows: cells, columns: 'genes'
   result$batch <- unlist(sapply(seq_len(n.batch),
-                                function(x,y){rep(x, y[x])},
+                                function(x,y) rep(x, y[x]),
                                 samples))
   result$comment <- paste0('testSet_multibatch_', n.genes,
                            'genes_', n.batch,
                            'batches_', plattform)
 
- return(result)
+  result
 }

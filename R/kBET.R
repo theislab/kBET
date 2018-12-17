@@ -124,7 +124,9 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
 
   stopifnot(class(n_repeat) == 'numeric', n_repeat>0)
 
+  do_heuristic <- FALSE
   if (is.null(k0) || k0>=dim.dataset[1]){
+    do_heuristic <- heuristic
     if(!heuristic){
       #default environment size: quarter the size of the largest batch
       k0=floor(mean(class.frequency$freq)*dim.dataset[1]/4)
@@ -212,7 +214,7 @@ kBET <- function(df, batch, k0=NULL,knn=NULL,
 
   }
 
-  if(heuristic){
+  if(do_heuristic){
     #btw, when we bisect here that returns some interval with
     #the optimal neihbourhood size
     if (verbose){

@@ -64,12 +64,13 @@
 #' @include kBET-utils.R
 #' @name kBET
 #' @export
-kBET <- function(df, batch, k0=NULL, knn = NULL,
-                 testSize=NULL, do.pca = TRUE, dim.pca = 50,
-                 heuristic=TRUE, n_repeat = 100,
-                 alpha=0.05, addTest = FALSE,
-                 verbose=FALSE, plot = TRUE, adapt=TRUE) {
-
+kBET <- function(
+  df, batch, k0 = NULL, knn = NULL,
+  testSize = NULL, do.pca = TRUE, dim.pca = 50,
+  heuristic = TRUE, n_repeat = 100,
+  alpha = 0.05, addTest = FALSE,
+  verbose = FALSE, plot = TRUE, adapt = TRUE
+) {
   #create a subsetting mode:
   #if (is.data.frame(batch) && dim(batch)[2]>1) {
   #  cat('Complex study design detected.\n')
@@ -107,8 +108,7 @@ kBET <- function(df, batch, k0=NULL, knn = NULL,
 
   if (dim.dataset[2] == length(batch) && dim.dataset[1] != length(batch)) {
     if (verbose) {
-      cat('Input matrix has samples as columns. kBET needs samples as rows.
-        Transposing...\n')
+      cat('Input matrix has samples as columns. kBET needs samples as rows. Transposing...\n')
     }
     dataset <- t(dataset)
     dim.dataset <- dim(dataset)
@@ -127,13 +127,14 @@ kBET <- function(df, batch, k0=NULL, knn = NULL,
       #default environment size: three quarter the size of the largest batch
       k0 <- floor(mean(class.frequency$freq)*dim.dataset[1]*0.75)
       if (k0 < 10) {
-        stop("Your dataset has too few samples to run a heuristic.\n
-             Please assign k0 and set heuristic=FALSE.")
+        stop(
+          "Your dataset has too few samples to run a heuristic.\n",
+          "Please assign k0 and set heuristic=FALSE."
+        )
       }
     }
     if (verbose) {
-      cat('Initial neighbourhood size is set to ')
-      cat(paste0(k0, '.\n'))
+      cat(paste0('Initial neighbourhood size is set to ', k0, '.\n'))
     }
   }
   # find KNNs
@@ -189,12 +190,16 @@ kBET <- function(df, batch, k0=NULL, knn = NULL,
         new.class.frequency <- data.frame(class = names(new.frequencies),
                                           freq = as.numeric(new.frequencies))
         if (verbose) {
-          cat(paste0('There are ', length(outsider), ' cells (',
-                     round(length(outsider)/length(batch)*100,3),
-                     '%) that do not appear in any neighbourhood.\n',
-                     'The expected frequencies for each category have
-                     been adapted.\n',
-                     'Cell indexes are saved to result list.\n'))
+          outs_percent <- round(length(outsider) / length(batch) * 100, 3)
+          cat(paste(
+            sprintf(
+              'There are %s cells (%s%%) that do not appear in any neighbourhood.',
+              length(outsider), outs_percent
+            ),
+            'The expected frequencies for each category have been adapted.',
+            'Cell indexes are saved to result list.',
+            '', sep = '\n'
+          ))
         }
       } else {
         if (verbose) {
@@ -220,22 +225,29 @@ kBET <- function(df, batch, k0=NULL, knn = NULL,
       }
     } else {
       if (verbose) {
-        cat(paste0('done.\nHeuristic did not change the
-                   neighbourhood.\n If results appear inconclusive,
-                   change k0=', k0, '.\n'))
+        cat(paste(
+          'done.',
+          'Heuristic did not change the neighbourhood.',
+          sprintf('If results appear inconclusive, change k0=%s.', k0),
+          '', sep = '\n'
+        ))
       }
     }
   }
 
   #initialise result list
   rejection <- list()
-  rejection$summary <- data.frame(kBET.expected = numeric(4),
-                                  kBET.observed = numeric(4),
-                                  kBET.signif = numeric(4))
+  rejection$summary <- data.frame(
+    kBET.expected = numeric(4),
+    kBET.observed = numeric(4),
+    kBET.signif = numeric(4)
+  )
 
-  rejection$results   <- data.frame(tested = numeric(dim.dataset[1]),
-                                    kBET.pvalue.test = rep(0,dim.dataset[1]),
-                                    kBET.pvalue.null = rep(0, dim.dataset[1]))
+  rejection$results <- data.frame(
+    tested = numeric(dim.dataset[1]),
+    kBET.pvalue.test = rep(0,dim.dataset[1]),
+    kBET.pvalue.null = rep(0, dim.dataset[1])
+  )
   #get average residual score
   env <- as.vector(cbind(knn$nn.index[, seq_len(k0 - 1)], seq_len(dim.dataset[1])))
   cf <- if (adapt && is.imbalanced) new.class.frequency else class.frequency
@@ -460,39 +472,35 @@ kBET <- function(df, batch, k0=NULL, knn = NULL,
       env <- cbind(knn$nn.index[idx.runs,seq_len(k0 - 1)], idx.runs)
 
       #perform test
-      if (adapt && is.imbalanced) {
-        p.val.test <- apply(env, 1, FUN = chi_batch_test,
-                            new.class.frequency, batch,  dof)
-      } else {
-        p.val.test <- apply(env, 1, FUN = chi_batch_test,
-                            class.frequency, batch,  dof)
-      }
+      cf <- if (adapt && is.imbalanced) new.class.frequency else class.frequency
+      p.val.test <- apply(env, 1, chi_batch_test, cf, batch, dof)
 
       #print(dim(env))
       is.rejected <- p.val.test < alpha
 
-      p.val.test.null <- apply(batch.shuff, 2,
-                               function(x, freq, dof, envir) {
-                                 apply(envir, 1, FUN = chi_batch_test, freq, x, dof)},
-                               class.frequency, dof, env)
+      p.val.test.null <- apply(
+        batch.shuff, 2,
+        function(x) apply(env, 1, chi_batch_test, class.frequency, x, dof)
+      )
       # p.val.test.null <- apply(env, 1, FUN = chi_batch_test,
       #class.frequency, batch.shuff, dof)
 
       #summarise test results
       #kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
-      kBET.expected[i] <- mean(apply(p.val.test.null, 2,
-                                     function(x,alpha) {
-                                       sum(x < alpha) / length(x)},
-                                     alpha))
+      kBET.expected[i] <- mean(apply(
+        p.val.test.null, 2,
+        function(x) sum(x < alpha) / length(x)
+      ))
 
       kBET.observed[i] <- sum(is.rejected) / length(p.val.test)
 
       #compute significance
-      kBET.signif[i] <-
-        1 - ptnorm(kBET.observed[i],
-                   mu = kBET.expected[i],
-                   sd = sqrt(kBET.expected[i] * (1 - kBET.expected[i]) / testSize),
-                   alpha = alpha)
+      kBET.signif[i] <- 1 - ptnorm(
+        kBET.observed[i],
+        mu = kBET.expected[i],
+        sd = sqrt(kBET.expected[i] * (1 - kBET.expected[i]) / testSize),
+        alpha = alpha
+      )
       #assign results to result table
       rejection$results$tested[idx.runs] <- 1
       rejection$results$kBET.pvalue.test[idx.runs] <- p.val.test

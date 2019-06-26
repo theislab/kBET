@@ -51,7 +51,7 @@
 #'    }
 #' @examples
 #'     batch <- rep(seq_len(10),each=20)
-#'     data <- matrix(rpois(n = 50000, lambda = 10)*rbinom(50000,1,prob=0.5), ncol=200)
+#'     data <- matrix(rpois(n = 50000, lambda = 10)*rbinom(50000,1,prob=0.5), nrow=200)
 #'
 #'     batch.estimate <- kBET(data,batch)
 

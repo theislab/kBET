@@ -78,6 +78,42 @@ knn <- get.knn(data, k=k0, algorithm = 'cover_tree')
 #now run kBET with pre-defined nearest neighbours.
 batch.estimate <- kBET(data, batch, k = k0, knn = knn)
 ```
+It must be noted that the `get.knn` function from the `FNN` package initializes a variable with `n * k` entries, where `n` is the sample size and `k` is the neighbourhood size. If `n * k > 2^31`, the `get.knn` aborts the k-nearest neighbour search. The initial neighbourhood size in kBET (`k0`) is ~ `1/4* mean(batch size)`, which can be already too large for example for mass cytometry data. In such cases, we recommend to subsample the data. 
+
+## Subsampling:
+
+Currently (July 2019), *kBET* operates only on dense matrices, which results in memory issues for large datasets. Furthermore, k-nearest neighbour search with `FNN` is limited (see above). We recommend to subsample in these cases. We have thought of several options. One option is to subsample the data irrespective of the substructure:
+
+```
+#data: a matrix (rows: samples, columns: features (genes))
+#batch: vector or factor with batch label of each cell 
+subset_size <- 0.1 #subsample to 10% of the data
+subset_id <- sample.int(n = length(batch), size = floor(subset_size * length(batch)), replace=FALSE)
+batch.estimate <- kBET(data[subset_id,], batch[subset_id])
+```
+
+In case of differently sized batches, one should consider *stratified sampling* in order to keep more samples from smaller batches. 
+
+The second option of subsampling is to take into account the substructure of the data (*i.e.* clusters). We observed that the batch label frequencies may vary in clusters. For example, such changes are due to inter-individual variability, or due to targeted population enrichment in some batches (e.g. by FACS), in contrast to unbiased cell sampling. In these cases, we compute the rejection rates for each cluster separately and average the results afterwards. 
+
+```
+#data: a matrix (rows: samples, columns: features (genes))
+#batch: vector or factor with batch label of each cell 
+#clusters: vector or factor with cluster label of each cell 
+
+kBET_result_list <- list()
+sum_kBET <- 0
+for (cluster_level in unique(clusters)){
+   batch_tmp <- batch[clusters == cluster_level]
+   data_tmp <- data[clusters == cluster_level,]
+   kBET_tmp <- kBET(df=data_tmp, batch=batch_tmp, plot=FALSE)
+   kBET_result_list[[cluster_level]] <- kBET_tmp
+   sum_kBET <- sum_kBET + kBET_tmp$summary$kBET.observed[1]
+}
+
+#averaging
+mean_kBET = sum_kBET/length(unique(clusters))
+```
 
 ## Compute a silhouette width and PCA-based measure:
 

@@ -148,6 +148,7 @@ kBET <- function(
       "Please assign k0 and set heuristic=FALSE."
     )
     return(NA)
+  }
   # find KNNs
   if (is.null(knn)) {
     if (!do.pca) {

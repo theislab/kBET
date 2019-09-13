@@ -4,9 +4,10 @@
 \alias{kBET}
 \title{kBET - k-nearest neighbour batch effect test}
 \usage{
-kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL, do.pca = TRUE,
-  dim.pca = 50, heuristic = TRUE, n_repeat = 100, alpha = 0.05,
-  addTest = FALSE, verbose = FALSE, plot = TRUE, adapt = TRUE)
+kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL,
+  do.pca = TRUE, dim.pca = 50, heuristic = TRUE, n_repeat = 100,
+  alpha = 0.05, addTest = FALSE, verbose = FALSE, plot = TRUE,
+  adapt = TRUE)
 }
 \arguments{
 \item{df}{dataset (rows: samples, columns: features)}
@@ -61,8 +62,6 @@ list object
    \item \code{stats} - extended test summary for every sample
    \item \code{params} - list of input parameters and adapted parameters,
    respectively
-   \item \code{badBatch} - the batches whose frequencies deviate most
-   from expected frequencies
    \item \code{outsider} - only shown if \code{adapt=TRUE}. List of samples
         without mutual nearest neighbour: \itemize{
     \item \code{index} - index of each outsider sample)
@@ -72,6 +71,8 @@ list object
     If the significance level is lower than \code{alpha},
     expected frequencies will be adapted}
    }
+
+If the optimal neighbourhood size is smaller than 10, NA is returned.
 }
 \description{
 \code{kBET} runs a chi square test to evaluate
@@ -79,7 +80,7 @@ the probability of a batch effect.
 }
 \examples{
     batch <- rep(seq_len(10),each=20)
-    data <- matrix(rpois(n = 50000, lambda = 10)*rbinom(50000,1,prob=0.5), ncol=200)
+    data <- matrix(rpois(n = 50000, lambda = 10)*rbinom(50000,1,prob=0.5), nrow=200)
 
     batch.estimate <- kBET(data,batch)
 }

@@ -4,8 +4,8 @@
 \alias{create_testset_multibatch}
 \title{create_testset_multibatch}
 \usage{
-create_testset_multibatch(n.genes = 1000, n.batch = 3, plattform = c("C1",
-  "dropseq", "any"))
+create_testset_multibatch(n.genes = 1000, n.batch = 3,
+  plattform = c("C1", "dropseq", "any"))
 }
 \arguments{
 \item{n.genes}{nummber of sampled genes}

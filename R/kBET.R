@@ -49,6 +49,7 @@
 #'     If the significance level is lower than \code{alpha},
 #'     expected frequencies will be adapted}
 #'    }
+#'    If the optimal neighbourhood size is smaller than 10, NA is returned.
 #' @examples
 #'     batch <- rep(seq_len(10),each=20)
 #'     data <- matrix(rpois(n = 50000, lambda = 10)*rbinom(50000,1,prob=0.5), nrow=200)
@@ -126,11 +127,13 @@ kBET <- function(
     } else {
       #default environment size: three quarter the size of the largest batch
       k0 <- floor(mean(class.frequency$freq)*dim.dataset[1]*0.75)
-      if (k0 < 10) {
-        stop(
+      if (k0 < 10 & verbose) {
+        warning(
           "Your dataset has too few samples to run a heuristic.\n",
+          "Return NA.\n",
           "Please assign k0 and set heuristic=FALSE."
         )
+        return(NA)
       }
     }
     if (verbose) {

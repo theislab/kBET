@@ -144,7 +144,7 @@ kBET <- function(
     }
   }
   #if k0 was set by the user and is too small, abort
-  if (k0 < 10 & verbose) {
+  if (k0 < 10) {
     if (verbose){
       warning(
       "Your dataset has too few samples to run a heuristic.\n",

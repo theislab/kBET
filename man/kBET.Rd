@@ -10,14 +10,14 @@ kBET(df, batch, k0 = NULL, knn = NULL, testSize = NULL,
   adapt = TRUE)
 }
 \arguments{
-\item{df}{dataset (rows: samples, columns: features)}
+\item{df}{dataset (rows: cells, columns: features)}
 
 \item{batch}{batch id for each cell or a data frame with
 both condition and replicates}
 
 \item{k0}{number of nearest neighbours to test on (neighbourhood size)}
 
-\item{knn}{a set of nearest neighbours for each cell (optional)}
+\item{knn}{an n x k matrix of nearest neighbours for each cell (optional)}
 
 \item{testSize}{number of data points to test,
 (10 percent sample size default, but at least 25)}
@@ -72,7 +72,7 @@ list object
     expected frequencies will be adapted}
    }
 
-If the optimal neighbourhood size is smaller than 10, NA is returned.
+If the optimal neighbourhood size (k0) is smaller than 10, NA is returned.
 }
 \description{
 \code{kBET} runs a chi square test to evaluate

@@ -3,11 +3,11 @@
 #' @description \code{kBET} runs a chi square test to evaluate
 #' the probability of a batch effect.
 #'
-#' @param df dataset (rows: samples, columns: features)
+#' @param df dataset (rows: cells, columns: features)
 #' @param batch batch id for each cell or a data frame with
 #' both condition and replicates
 #' @param k0 number of nearest neighbours to test on (neighbourhood size)
-#' @param knn a set of nearest neighbours for each cell (optional)
+#' @param knn an n x k matrix of nearest neighbours for each cell (optional)
 #' @param testSize number of data points to test,
 #' (10 percent sample size default, but at least 25)
 #' @param do.pca perform a pca prior to knn search? (defaults to TRUE)
@@ -165,7 +165,8 @@ kBET <- function(
         cat('finding knns...')
         tic <- proc.time()
       }
-      knn <- get.knn(dataset, k = k0, algorithm = 'cover_tree')
+      #use the nearest neighbour index directly for further use in the package
+      knn <- get.knn(dataset, k = k0, algorithm = 'cover_tree')$nn.index
     } else {
       dim.comp <- min(dim.pca, dim.dataset[2])
       if (verbose) {
@@ -184,6 +185,14 @@ kBET <- function(
     }
   }
 
+  #backward compatibility for knn-graph
+  if (class(knn) =='list'){
+    knn <- knn$nn.index
+    if (verbose){
+      cat('KNN input is a list, extracting nearest neighbour index.\n')
+    }
+  }
+
   #set number of tests
   if (is.null(testSize) || (floor(testSize) < 1 || dim.dataset[1] < testSize)) {
     test.frac <- 0.1
@@ -199,7 +208,7 @@ kBET <- function(
   #decide to adapt general frequencies
   if (adapt) {
     # idx.run <- sample.int(dim.dataset[1], size = min(2*testSize, dim.dataset[1]))
-    outsider <- which(!(seq_len(dim.dataset[1]) %in% knn$nn.index[, seq_len(k0 - 1)]))
+    outsider <- which(!(seq_len(dim.dataset[1]) %in% knn[, seq_len(k0 - 1)]))
     is.imbalanced <- FALSE #initialisation
     p.out <- 1
     #avoid unwanted things happen if length(outsider) == 0
@@ -270,7 +279,7 @@ kBET <- function(
     kBET.pvalue.null = rep(0, dim.dataset[1])
   )
   #get average residual score
-  env <- as.vector(cbind(knn$nn.index[, seq_len(k0 - 1)], seq_len(dim.dataset[1])))
+  env <- as.vector(cbind(knn[, seq_len(k0 - 1)], seq_len(dim.dataset[1])))
   cf <- if (adapt && is.imbalanced) new.class.frequency else class.frequency
   rejection$average.pval <- 1 - pchisq(k0 * residual_score_batch(env, cf, batch), dof)
 
@@ -308,7 +317,7 @@ kBET <- function(
     for (i in seq_len(n_repeat)) {
       # choose a random sample from dataset (rows: samples, columns: features)
       idx.runs <- sample.int(dim.dataset[1], size = testSize)
-      env <- cbind(knn$nn.index[idx.runs, seq_len(k0 - 1)], idx.runs)
+      env <- cbind(knn[idx.runs, seq_len(k0 - 1)], idx.runs)
       #env.rand <- t(sapply(rep(dim.dataset[1],testSize),  sample.int, k0))
 
       #perform test
@@ -490,7 +499,7 @@ kBET <- function(
       # choose a random sample from dataset
       #(rows: samples, columns: parameters)
       idx.runs <- sample.int(dim.dataset[1], size = testSize)
-      env <- cbind(knn$nn.index[idx.runs,seq_len(k0 - 1)], idx.runs)
+      env <- cbind(knn[idx.runs,seq_len(k0 - 1)], idx.runs)
 
       #perform test
       cf <- if (adapt && is.imbalanced) new.class.frequency else class.frequency

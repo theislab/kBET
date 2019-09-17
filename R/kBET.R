@@ -143,8 +143,12 @@ kBET <- function(
       cat(paste0('Initial neighbourhood size is set to ', k0, '.\n'))
     }
   }
-  #if k0 was set by the user and is too small, abort
-  if (k0 < 10) {
+
+  #if k0 was set by the user and is too small & we do not operate on a
+  #knn graph, abort
+  #the reason is that if we want to test kBET on knn graph data integration methods,
+  #we usually face small numbers of nearest neighbours.
+  if (k0 < 10 & is.null(knn)) {
     if (verbose){
       warning(
       "Your dataset has too few samples to run a heuristic.\n",

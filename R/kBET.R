@@ -214,30 +214,35 @@ kBET <- function(
     #avoid unwanted things happen if length(outsider) == 0
     if (length(outsider) > 0) {
       p.out <- chi_batch_test(outsider, class.frequency, batch,  dof)
-      is.imbalanced <- p.out < alpha
-      if (is.imbalanced) {
-        new.frequencies <- table(batch[-outsider])/length(batch[-outsider])
-        new.class.frequency <- data.frame(class = names(new.frequencies),
-                                          freq = as.numeric(new.frequencies))
-        if (verbose) {
-          outs_percent <- round(length(outsider) / length(batch) * 100, 3)
-          cat(paste(
-            sprintf(
-              'There are %s cells (%s%%) that do not appear in any neighbourhood.',
-              length(outsider), outs_percent
-            ),
-            'The expected frequencies for each category have been adapted.',
-            'Cell indexes are saved to result list.',
-            '', sep = '\n'
-          ))
+      if (!is.na(p.out)){
+        is.imbalanced <- p.out < alpha
+        if (is.imbalanced) {
+          new.frequencies <- table(batch[-outsider])/length(batch[-outsider])
+          new.class.frequency <- data.frame(class = names(new.frequencies),
+                                            freq = as.numeric(new.frequencies))
+          if (verbose) {
+            outs_percent <- round(length(outsider) / length(batch) * 100, 3)
+            cat(paste(
+              sprintf(
+                'There are %s cells (%s%%) that do not appear in any neighbourhood.',
+                length(outsider), outs_percent
+              ),
+              'The expected frequencies for each category have been adapted.',
+              'Cell indexes are saved to result list.',
+              '', sep = '\n'
+            ))
+          }
+        } else {
+          if (verbose) {
+            cat(paste0('No outsiders found.'))
+          }
         }
-      } else {
+      } else{
         if (verbose) {
           cat(paste0('No outsiders found.'))
         }
       }
     }
-
   }
 
   if (do_heuristic) {
@@ -338,13 +343,14 @@ kBET <- function(
       p.val.test.null <-  apply(apply(batch.shuff, 2,
                                       function(x, freq, dof, envir) {
                                         apply(envir, 1, FUN = chi_batch_test, freq, x, dof)},
-                                      class.frequency, dof, env), 1, mean)
+                                      class.frequency, dof, env), 1, mean, na.rm=TRUE)
       #p.val.test.null <- apply(env.rand, 1, FUN = chi_batch_test,
       #class.frequency, batch, dof)
 
       #summarise test results
-      kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
-      kBET.observed[i] <- sum(is.rejected) / length(p.val.test)
+      kBET.expected[i] <- sum(p.val.test.null < alpha,
+                              na.rm=TRUE) / sum(!is.na(p.val.test.null))
+      kBET.observed[i] <- sum(is.rejected,na.rm=TRUE) / sum(!is.na(p.val.test))
 
       #compute significance
       kBET.signif[i] <-
@@ -361,16 +367,16 @@ kBET <- function(
 
       #compute likelihood-ratio test (approximation for multinomial exact test)
       cf <- if (adapt && is.imbalanced) new.class.frequency else class.frequency
-      p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation, new.class.frequency, batch, dof)
+      p.val.test.lrt <- apply(env, 1, FUN = lrt_approximation, cf, batch, dof)
       p.val.test.lrt.null <- apply(apply(batch.shuff, 2,
                                          function(x, freq, dof, envir) {
                                            apply(envir, 1, FUN = lrt_approximation, freq, x, dof)},
-                                         class.frequency, dof, env), 1, mean)
+                                         class.frequency, dof, env), 1, mean, na.rm=TRUE)
 
       lrt.expected[i] <-
-        sum(p.val.test.lrt.null < alpha) / length(p.val.test.lrt.null)
+        sum(p.val.test.lrt.null < alpha, na.rm=TRUE) / sum(!is.na(p.val.test.lrt.null))
       lrt.observed[i] <-
-        sum(p.val.test.lrt < alpha) / length(p.val.test.lrt)
+        sum(p.val.test.lrt < alpha, na.rm=TRUE) / sum(!is.na(p.val.test.lrt))
 
       lrt.signif[i] <-
         1 - ptnorm(lrt.observed[i],
@@ -399,11 +405,11 @@ kBET <- function(
         p.val.test.exact.null <-  apply(apply(batch.shuff, 2,
                                               function(x, freq, envir) {
                                                 apply(envir, 1, FUN = multiNom, freq, x)},
-                                              class.frequency$freq, env), 1, mean)
+                                              class.frequency$freq, env), 1, mean, na.rm=TRUE)
         # apply(env, 1, multiNom, class.frequency$freq, batch.shuff)
 
-        exact.expected[i] <- sum(p.val.test.exact.null < alpha)/testSize
-        exact.observed[i] <- sum(p.val.test.exact < alpha)/testSize
+        exact.expected[i] <- sum(p.val.test.exact.null < alpha, na.rm=TRUE)/testSize
+        exact.observed[i] <- sum(p.val.test.exact < alpha, na.rm=TRUE)/testSize
         #compute the significance level for the number of rejected data points
         exact.signif[i] <-
           1 - ptnorm(exact.observed[i],
@@ -519,10 +525,10 @@ kBET <- function(
       #kBET.expected[i] <- sum(p.val.test.null < alpha) / length(p.val.test.null)
       kBET.expected[i] <- mean(apply(
         p.val.test.null, 2,
-        function(x) sum(x < alpha) / length(x)
+        function(x) sum(x < alpha, na.rm =TRUE) / sum(!is.na(x))
       ))
 
-      kBET.observed[i] <- sum(is.rejected) / length(p.val.test)
+      kBET.observed[i] <- sum(is.rejected,na.rm=TRUE) / sum(!is.na(p.val.test))
 
       #compute significance
       kBET.signif[i] <- 1 - ptnorm(
@@ -534,7 +540,7 @@ kBET <- function(
       #assign results to result table
       rejection$results$tested[idx.runs] <- 1
       rejection$results$kBET.pvalue.test[idx.runs] <- p.val.test
-      rejection$results$kBET.pvalue.null[idx.runs] <- rowMeans(p.val.test.null)
+      rejection$results$kBET.pvalue.null[idx.runs] <- rowMeans(p.val.test.null, na.rm=TRUE)
     }
 
     if (n_repeat > 1) {

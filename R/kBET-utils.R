@@ -12,25 +12,36 @@ scan_nb <- function(x,df,batch, knn) {
 residual_score_batch <- function(knn.set, class.freq, batch) {
   #knn.set: indices of nearest neighbours
   #empirical frequencies in nn-environment (sample 1)
-  freq.env <- table(batch[knn.set])/length(knn.set)
-  full.classes <- rep(0, length(class.freq$class))
-  full.classes[ class.freq$class %in% names(freq.env)] <- freq.env
-  exp.freqs <- class.freq$freq
-  #compute chi-square test statistics
-  sum((full.classes - exp.freqs)^2/exp.freqs)
+  #ignore NA entries (which may arise from subsampling a knn-graph)
+  if (all(is.na(knn.set))){ #if all values of a neighbourhood are NA
+    return(NA)
+  }
+  else{
+    freq.env <- table(batch[knn.set[!is.na(knn.set)]])/length(!is.na(knn.set))
+    full.classes <- rep(0, length(class.freq$class))
+    full.classes[ class.freq$class %in% names(freq.env)] <- freq.env
+    exp.freqs <- class.freq$freq
+    #compute chi-square test statistics
+    sum((full.classes - exp.freqs)^2/exp.freqs)
+  }
 }
 
 #which batch has the largest deviance (and is underrepresented)
 max_deviance_batch <- function(knn.set, class.freq, batch) {
   #knn.set: indices of nearest neighbours
   #empirical frequencies in nn-environment (sample 1)
-  freq.env <- table(batch[knn.set]) / length(knn.set)
+  if (all(is.na(knn.set))){ #if all values of a neighbourhood are NA
+    return(NA)
+  }
+  else{
+  freq.env <- table(batch[knn.set[!is.na(knn.set)]])/length(!is.na(knn.set))
   full.classes <- rep(0, length(class.freq$class))
   full.classes[ class.freq$class %in% names(freq.env)] <- freq.env
   exp.freqs <- class.freq$freq
   #compute chi-square test statistics
   allScores <- (full.classes - exp.freqs)/exp.freqs
   batch[which(allScores == min(allScores))]
+  }
 }
 
 
@@ -38,7 +49,11 @@ max_deviance_batch <- function(knn.set, class.freq, batch) {
 chi_batch_test <- function(knn.set, class.freq, batch, df) {
   #knn.set: indices of nearest neighbours
   #empirical frequencies in nn-environment (sample 1)
-  freq.env <- table(batch[knn.set])
+  if (all(is.na(knn.set))){ #if all values of a neighbourhood are NA
+    return(NA)
+  }
+  else{
+  freq.env <- table(batch[knn.set[!is.na(knn.set)]])
   full.classes <- rep(0, length(class.freq$class))
   full.classes[ class.freq$class %in% names(freq.env)] <- freq.env
   exp.freqs <- class.freq$freq*length(knn.set)
@@ -46,16 +61,21 @@ chi_batch_test <- function(knn.set, class.freq, batch, df) {
   chi.sq.value <- sum((full.classes - exp.freqs)^2/exp.freqs)
   result <- 1 - pchisq(chi.sq.value, df) #p-value for the result
   if (is.na(result)) { #I actually would like to now when 'NA' arises.
-    0
+    return(NA)
   } else {
     result
+  }
   }
 }
 
 lrt_approximation <- function(knn.set, class.freq, batch, df) {
   #knn.set: indices of nearest neighbours
   #empirical frequencies in nn-environment (sample 1)
-  obs.env <- table(batch[knn.set]) #observed realisations of each category
+  if (all(is.na(knn.set))){ #if all values of a neighbourhood are NA
+    return(NA)
+  }
+  else{
+  obs.env <- table(batch[knn.set[!is.na(knn.set)]]) #observed realisations of each category
   freq.env <- obs.env/sum(obs.env) #observed 'probabilities'
   full.classes <- rep(0, length(class.freq$class))
   obs.classes <- class.freq$class %in% names(freq.env)
@@ -80,9 +100,10 @@ lrt_approximation <- function(knn.set, class.freq, batch, df) {
 
   result <- 1 - pchisq(lrt.value, df) #p-value for the result
   if (is.na(result)) { #I actually would like to now when 'NA' arises.
-    0
+    return(NA)
   } else {
     result
+  }
   }
 }
 #truncated normal distribution distribution function

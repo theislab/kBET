@@ -110,32 +110,38 @@ lrt_approximation <- function(knn.set, class.freq, batch, df) {
 ptnorm <- function(x,mu,sd, a=0, b=1, alpha = 0.05, verbose = FALSE){
   #this is the cumulative density of the truncated normal distribution
   #x ~ N(mu, sd^2), but we condition on a <= x <= b
-  if (a > b) {
-    warning("Lower and upper bound are interchanged.")
-    tmp <- a
-    a <- b
-    b <- tmp
-  }
+  if (!is.na(x)){
 
-  if (sd <= 0 || is.na(sd)) {
-    if (verbose) {
-      warning("Standard deviation must be positive.")
+
+    if (a > b) {
+      warning("Lower and upper bound are interchanged.")
+      tmp <- a
+      a <- b
+      b <- tmp
     }
-    if (alpha <= 0) {
-      stop("False positive rate alpha must be positive.")
+
+    if (sd <= 0 || is.na(sd)) {
+      if (verbose) {
+        warning("Standard deviation must be positive.")
+      }
+      if (alpha <= 0) {
+        stop("False positive rate alpha must be positive.")
+      }
+      sd <- alpha
     }
-    sd <- alpha
-  }
-  if (x < a || x > b) {
-    warning("x out of bounds.")
-    cdf <- as.numeric(x > a)
+    if (x < a || x > b) {
+      warning("x out of bounds.")
+      cdf <- as.numeric(x > a)
+    } else {
+      alp <- pnorm((a - mu) / sd)
+      bet <- pnorm((b - mu) / sd)
+      zet <- pnorm((x - mu) / sd)
+      cdf <- (zet - alp) / (bet - alp)
+    }
+    cdf
   } else {
-    alp <- pnorm((a - mu) / sd)
-    bet <- pnorm((b - mu) / sd)
-    zet <- pnorm((x - mu) / sd)
-    cdf <- (zet - alp) / (bet - alp)
+    return(NA)
   }
-  cdf
 }
 #wrapper for the multinomial exact test function
 multiNom <- function(x, y, z) {

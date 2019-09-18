@@ -114,7 +114,13 @@ kBET <- function(
     dataset <- t(dataset)
     dim.dataset <- dim(dataset)
   }
-
+  #check if the dataset is too small per se
+  if (dim.dataset[1]<=10){
+    if (verbose){
+      cat("Your dataset has less than 10 samples. Abort and return NA.\n")
+    }
+    return(NA)
+  }
 
   stopifnot(class(n_repeat) == 'numeric', n_repeat > 0)
 

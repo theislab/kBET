@@ -433,28 +433,37 @@ kBET <- function(
     if (n_repeat > 1) {
       #summarize chi2-results
       CI95 <- c(0.025,0.5,0.975)
-      rejection$summary$kBET.expected <-  c(mean(kBET.expected) ,
-                                            quantile(kBET.expected, CI95))
+      rejection$summary$kBET.expected <-  c(mean(kBET.expected, na.rm=TRUE) ,
+                                            quantile(kBET.expected, CI95,
+                                                     na.rm=TRUE))
       rownames(rejection$summary) <- c('mean', '2.5%', '50%', '97.5%')
-      rejection$summary$kBET.observed <-  c(mean(kBET.observed) ,
-                                            quantile(kBET.observed, CI95))
-      rejection$summary$kBET.signif <- c(mean(kBET.signif) ,
-                                         quantile(kBET.signif, CI95))
+      rejection$summary$kBET.observed <-  c(mean(kBET.observed,na.rm=TRUE) ,
+                                            quantile(kBET.observed, CI95,
+                                                     na.rm=TRUE))
+      rejection$summary$kBET.signif <- c(mean(kBET.signif,na.rm=TRUE) ,
+                                         quantile(kBET.signif, CI95,
+                                                  na.rm=TRUE))
       #summarize lrt-results
-      rejection$summary$lrt.expected <-  c(mean(lrt.expected) ,
-                                           quantile(lrt.expected, CI95))
-      rejection$summary$lrt.observed <-  c(mean(lrt.observed) ,
-                                           quantile(lrt.observed, CI95))
-      rejection$summary$lrt.signif <- c(mean(lrt.signif) ,
-                                        quantile(lrt.signif, CI95))
+      rejection$summary$lrt.expected <-  c(mean(lrt.expected,na.rm=TRUE) ,
+                                           quantile(lrt.expected, CI95,
+                                                    na.rm=TRUE))
+      rejection$summary$lrt.observed <-  c(mean(lrt.observed,na.rm=TRUE) ,
+                                           quantile(lrt.observed, CI95,
+                                                    na.rm=TRUE))
+      rejection$summary$lrt.signif <- c(mean(lrt.signif,na.rm=TRUE) ,
+                                        quantile(lrt.signif, CI95,
+                                                 na.rm=TRUE))
       #summarize exact test results
       if (exists(x = 'exact.observed')) {
-        rejection$summary$exact.expected <-  c(mean(exact.expected) ,
-                                               quantile(exact.expected, CI95))
-        rejection$summary$exact.observed <-  c(mean(exact.observed) ,
-                                               quantile(exact.observed, CI95))
-        rejection$summary$exact.signif <- c(mean(exact.signif) ,
-                                            quantile(exact.signif, CI95))
+        rejection$summary$exact.expected <-  c(mean(exact.expected,na.rm=TRUE) ,
+                                               quantile(exact.expected, CI95,
+                                                        na.rm=TRUE))
+        rejection$summary$exact.observed <-  c(mean(exact.observed,na.rm=TRUE) ,
+                                               quantile(exact.observed, CI95,
+                                                        na.rm=TRUE))
+        rejection$summary$exact.signif <- c(mean(exact.signif,na.rm=TRUE) ,
+                                            quantile(exact.signif, CI95,
+                                                     na.rm=TRUE))
       }
 
       if (n_repeat < 10) {
@@ -552,10 +561,16 @@ kBET <- function(
     if (n_repeat > 1) {
       #summarize chi2-results
       CI95 <- c(0.025,0.5,0.975)
-      rejection$summary$kBET.expected <- c(mean(kBET.expected), quantile(kBET.expected, CI95))
+      rejection$summary$kBET.expected <- c(mean(kBET.expected,na.rm=TRUE),
+                                           quantile(kBET.expected,
+                                                    CI95,na.rm=TRUE))
       rownames(rejection$summary) <- c('mean', '2.5%', '50%', '97.5%')
-      rejection$summary$kBET.observed <- c(mean(kBET.observed), quantile(kBET.observed, CI95))
-      rejection$summary$kBET.signif <- c(mean(kBET.signif), quantile(kBET.signif, CI95))
+      rejection$summary$kBET.observed <- c(mean(kBET.observed,na.rm=TRUE),
+                                           quantile(kBET.observed, CI95,
+                                                    na.rm=TRUE))
+      rejection$summary$kBET.signif <- c(mean(kBET.signif,na.rm=TRUE),
+                                         quantile(kBET.signif, CI95,
+                                                  na.rm=TRUE))
 
       #return also n_repeat
       rejection$stats$kBET.expected <- kBET.expected

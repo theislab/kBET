@@ -192,7 +192,7 @@ kBET <- function(
   }
 
   #backward compatibility for knn-graph
-  if (class(knn) =='list'){
+  if(is(object, "list")){
     knn <- knn$nn.index
     if (verbose){
       cat('KNN input is a list, extracting nearest neighbour index.\n')

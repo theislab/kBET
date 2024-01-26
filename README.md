@@ -33,8 +33,8 @@ install.packages('kBET.zip', repos = NULL, type = 'source')
 ## Usage of the *kBET* function:
 
 ```R
-#data: a matrix (rows: samples, columns: features (genes))
-#batch: vector or factor with batch label of each cell 
+#data: a matrix (rows: cells or other observations, columns: features (genes); will be transposed if necessary)
+#batch: vector or factor with batch label of each cell/observation; length has to match the size of the corresponding data dimension  
 batch.estimate <- kBET(data, batch)
 ```
 *kBET* creates (if `plot = TRUE`) a boxplot of the *kBET* rejection rates (for neighbourhoods and randomly chosen subsets of size *k*) and *kBET* returns a list with several parts:
